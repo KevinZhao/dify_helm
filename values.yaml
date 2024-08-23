@@ -2,7 +2,6 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-
 # volume and volumeMounts would be injected to api and worker
 volumes: []
 
@@ -12,59 +11,132 @@ nameOverride: ""
 fullnameOverride: ""
 
 global:
-  host: "k8s-dify-dify-4a17bea377-414007464.ap-southeast-1.elb.amazonaws.com"
-  # Change this is your ingress is exposed with port other than 443, 80, like 8080 for instance
+  host: ""
+  # Change this if your ingress is exposed with port other than 443, 80, like 8080 for instance
   port: ""
-  enableTLS: false
+  enableTLS: true
   image:
-    tag: "0.6.16"
+    # Change this for new Dify version
+    tag: "0.7.0"
   edition: "SELF_HOSTED"
-  storageType: "minio"
+  storageType: "s3"
+
+  #---------------------------------------------------------------------#
+
+  # enviroment variable injestion, please refer to Dify official document
+  # https://docs.dify.ai/getting-started/install-self-hosted/environments
+
   # the following extra configs would be injected into:
   # * frontend
   # * api
   # * worker
   extraEnvs: []
 
+  #---------------------------------------------------------------------#
   # the following extra configs would be injected into:
   # * api
   # * worker
   extraBackendEnvs:
-  # SECRET_KEY is a must, check https://docs.dify.ai/getting-started/install-self-hosted/environments#secret_key for detail
+
+  # SECRET_KEY is a must, A key used to securely sign session cookies and encrypt sensitive information in the database.This variable needs to be set when starting for the first time.
+  # You can use "openssl rand -base64 42" to generate a strong key.
+
   # read more on the readme page for secret ref
   - name: SECRET_KEY
-    value: "d/BV81Qc0hY4BSYzoVPdG9evGco1YBYIxyGBWOrLRFe4nwbKTYGnHQdI"
+    value: ""
+  # use "kubectl create secret generic dify --from-literal=SECRET_KEY=your_secret_value" to create s secret
   # use secretRef to protect your secret
   # - name: SECRET_KEY
   #   valueFrom:
   #     secretKeyRef:
   #       name: dify
   #       key: SECRET_KEY
+
   - name: LOG_LEVEL
     value: "DEBUG"
 
-  # RDS DB
-  #- name: DB_USERNAME
-  #  value: "postgres"
+  #---------------------------------------------------------------------#
+  # PostgreSQL database
+  # RDS PostgreSQL or Aurora(PostgreSQL Compatatible) Database
+  - name: DB_USERNAME
+    value: "postgres"
   # it is adviced to use secret to manage you sensitive info including password
-  #- name: DB_PASSWORD
-  #  valueFrom:
-  #    secretKeyRef:
-  #      name: dify
-  #      key: DB_PASSWORD
-  #- name: DB_HOST
-  #  value: "database-1-instance-1.cfl91iadc31f.ap-southeast-1.rds.amazonaws.com"
-  #- name: DB_PORT
-  #  value: "5432"
-  #- name: DB_DATABASE
-  #  value: dify
+  - name: DB_PASSWORD
+    value: ""
+  - name: DB_HOST
+    value: ""
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_DATABASE
+    value: dify
+  
+  #---------------------------------------------------------------------#
+  # Vector DB
+  - name: VECTOR_STORE
+    value: "opensearch"
+    
+  - name: OPENSEARCH_HOST
+    value: ""
+  - name: OPENSEARCH_PORT
+    value: "443"
+  - name: OPENSEARCH_USER
+    value: "admin"
+  - name: OPENSEARCH_PASSWORD
+    value: ""
+  - name: OPENSEARCH_SECURE
+    value: "true"
 
-  #- name: VECTOR_STORE
-  #  value: "milvus"
+  # Dify supports different kind of vector DB, please refer to below configuration
+  # https://docs.dify.ai/v/zh-hans/getting-started/install-self-hosted/environments#xiang-liang-shu-ju-ku-pei-zhi
+
+  #- name: VECTOR_STORE 
+    #value: "qdrant"
+
+  #- name: QDRANT_URL
+  #  value: "http://your_host"
+
+  #---------------------------------------------------------------------#
+  # Redis
+  # Elasticache Redis configuration
+  - name: REDIS_HOST
+    value: ""
+  - name: REDIS_PORT
+    value: "6379"
+  - name: REDIS_DB
+    value: "1"
+  #- name: REDIS_USERNAME
+  #  value: ""
+  - name: REDIS_PASSWORD
+    value: ""
+  #- name: REDIS_USE_SSL
+  #  value: "true"
+
+  #---------------------------------------------------------------------#
+  # Celery Configuration
+  # Using below format
+  # redis://<redis_username>:<redis_password>@<redis_host>:<redis_port>/<redis_database>
+  # ex: redis://host:difyai123456@redis:6379/1
+  
+  - name: CELERY_BROKER_URL
+    value: "redis://host:6379/0"
+
+  #---------------------------------------------------------------------# 
+  # S3
+  - name: S3_ENDPOINT
+    value: "https://your_bucket_name.s3.your_region.amazonaws.com"
+  - name: S3_BUCKET_NAME
+    value: "your_bucket_name"
+  - name: S3_ACCESS_KEY
+    value: ""
+  - name: S3_SECRET_KEY
+    value: ""
+  - name: S3_REGION
+    value: "your_region"
 
   # Provide extra labels for all deployments and related pods of this chart
   labels: {}
 
+#***********************************************************************#
 ingress:
   enabled: true
   className: "alb"
@@ -72,10 +144,12 @@ ingress:
     kubernetes.io/ingress.class: "alb"
     alb.ingress.kubernetes.io/scheme: "internet-facing"  # 或 "internal"
     alb.ingress.kubernetes.io/target-type: "ip"
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
-  tlsSecretName: "" # 可以省略这行或留空
+    #alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/certificate-arn: "arn_of_your_certification"
+  #tlsSecretName: "my-tls-secret" # 可以省略这行或留空
   hosts:
-    - host: "k8s-dify-dify-4a17bea377-414007464.ap-southeast-1.elb.amazonaws.com"
+    - host: "dify.zhaokm.org"
       paths:
         - path: /api
           pathType: Prefix
@@ -103,6 +177,7 @@ ingress:
             serviceName: "dify-frontend"
             servicePort: 80
 
+#***********************************************************************#
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
@@ -112,6 +187,7 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
+#***********************************************************************#
 frontend:
   replicaCount: 1
 
@@ -133,16 +209,18 @@ frontend:
     # capabilities:
     #   drop:
     #   - ALL
-    # readOnlyRootFilesystem: true
+    # OnlyRootFilesystem: true
     # runAsNonRoot: true
     # runAsUser: 1000
 
   service:
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/apps"
+      service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: "80"
     type: ClusterIP
     port: 80
 
   containerPort: 3000
-
 
   resources: {}
     # We usually recommend not to specify default resources and to leave this as a conscious
@@ -193,6 +271,7 @@ frontend:
     successThreshold: 1
     failureThreshold: 2
 
+#***********************************************************************#
 api:
   replicaCount: 1
 
@@ -233,6 +312,9 @@ api:
     # runAsUser: 1000
 
   service:
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/health"
+      service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: "80"
     type: ClusterIP
     port: 80
 
@@ -282,6 +364,7 @@ api:
     successThreshold: 1
     failureThreshold: 10
 
+#***********************************************************************#
 worker:
   replicaCount: 1
 
@@ -336,6 +419,7 @@ worker:
   livenessProbe: {}
   readinessProbe: {}
 
+#***********************************************************************#
 sandbox:
   replicaCount: 1
   # please change to avoid abuse
@@ -346,7 +430,7 @@ sandbox:
     repository: langgenius/dify-sandbox
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "0.2.0"
+    tag: ""
   config:
     # python_requirements: |
     #   numpy==1.20.3
@@ -379,7 +463,6 @@ sandbox:
 
   containerPort: 8194
 
-
   resources: {}
     # We usually recommend not to specify default resources and to leave this as a conscious
     # choice for the user. This also increases chances charts run on environments with little
@@ -405,7 +488,6 @@ sandbox:
 
   affinity: {}
 
-
   readinessProbe:
     tcpSocket:
       port: http
@@ -423,52 +505,64 @@ sandbox:
     successThreshold: 1
     failureThreshold: 2
 
-##### dependencies #####
-
+#*******************dependencies****************************************#
+# Production enviroment, please use managed services for data persistance
+# Set embedded variable to True to use docker-compose
 redis:
   # using embedded redis
   # connection info would be set automatically
   # best to use external redis if you have one
-  embedded: true
-  # embedded: false
+  #embedded: true
   # url: "redis://127.0.0.1:6379/0"
   # urlSecret: ""
   # urlSecretKey: "CACHE_URL"
   # please consult to chart manual if you want to change it.
   # https://artifacthub.io/packages/helm/bitnami/redis
-  architecture: standalone
-  auth:
-    password: "REDIS_PASSWORD"
-  master:
-    persistence:
-      enabled: false
-      size: 8Gi
+  #architecture: standalone
+  #auth:
+  #  password: "REDIS_PASSWORD"
+  #master:
+  #  persistence:
+  #    enabled: false
+  #    size: 8Gi
 
+  embedded: false
+
+#*******************dependencies****************************************#
+# Production enviroment, please use managed services for data persistance
+# Set embedded variable to True to use docker-compose
 postgresql:
   # using embedded postgresql
   # connection info would be set automatically
   # best to use external pg if you have one
   # setting embedded to false and set pg url in envrionment variable
-  embedded: true
-  #embedded: false
+  # embedded: true
+  
   # goto extraBackendEnvs to set pg url
-  architecture: standalone
-  auth:
-    postgresPassword: "Kevin8093."
-    database: "dify"
-  primary:
-    persistence:
-      enabled: false
+  # architecture: standalone
+  # auth:
+  #  postgresPassword: ""
+  #  database: "dify"
+  # primary:
+  #  persistence:
+  #    enabled: false
 
-minio:
   embedded: false
+
+#*******************dependencies****************************************#
+# Production enviroment, please use managed services for data persistance
+# Set embedded variable to True to use docker-compose
+minio:
+  #embedded: true
   # using embedded minio
   # connection info would be set automatically
   # best to use external s3/minio if you have one
   # setting embedded to false and set minio/s3 url in envrionment variable
-  auth:
-    rootUser: minioadmin
-    rootPassword: minioadmin
-  defaultBuckets: "dify"
-  persistence:
-    enabled: false
+  #auth:
+  #  rootUser: minioadmin
+  #  rootPassword: minioadmin
+  #defaultBuckets: "dify"
+  #persistence:
+  #  enabled: false
+
+  embedded: false

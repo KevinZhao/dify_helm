@@ -10,42 +10,65 @@ create your own values file , save as `values.yaml`
 
 ```yaml
 global:
-  host: "mydify.example.com"
-  enableTLS: false
-
+  host: ""
+  # Change this if your ingress is exposed with port other than 443, 80, like 8080 for instance
+  port: ""
+  enableTLS: true
   image:
-    # Set to the latest version of dify
-    # Check the version here: https://github.com/langgenius/dify/releases
-    # If not set, Using the default value in Chart.yaml
-    tag: "0.6.3"
+    # Change this for new Dify version
+    tag: "0.7.0"
+  edition: "SELF_HOSTED"
+  storageType: "s3"
+
+  #---------------------------------------------------------------------#
+
+  # enviroment variable injestion, please refer to Dify official document
+  # https://docs.dify.ai/getting-started/install-self-hosted/environments
+
+  # the following extra configs would be injected into:
+  # * frontend
+  # * api
+  # * worker
+  extraEnvs: []
+
+  #---------------------------------------------------------------------#
+  # the following extra configs would be injected into:
+  # * api
+  # * worker
   extraBackendEnvs:
+
+  # SECRET_KEY is a must, A key used to securely sign session cookies and encrypt sensitive information in the database.This variable needs to be set when starting for the first time.
+  # You can use "openssl rand -base64 42" to generate a strong key.
+
+  # read more on the readme page for secret ref
   - name: SECRET_KEY
-    value: "generate your own one"
+    value: ""
+  # use "kubectl create secret generic dify --from-literal=SECRET_KEY=your_secret_value" to create s secret
+  # use secretRef to protect your secret
+  # - name: SECRET_KEY
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: dify
+  #       key: SECRET_KEY
+
   - name: LOG_LEVEL
     value: "DEBUG"
-  - name: VECTOR_STORE
-    value: "milvus"
-
-ingress:
-  enabled: true
-  className: "nginx"
-
-minio:
-  embedded: true
 ```
 
 ```sh
 # install it
 helm repo add douban https://douban.github.io/charts/
 helm upgrade dify douban/dify -f values.yaml --install --debug
+
+kubectl get pods -A
 ```
 
-**Must** run db migration after installation, or the instance would not work.
+Find pod start with "dify-api-", this initiate the dify postgreSQL database, execute follow command:
 
 ```sh
-# run migration
-kubectl exec -it dify-pod-name -- flask db upgrade
+kubectl exec -it dify-api-5b76699958-mt868 -- flask db upgrade
 ```
+
 
 ## Upgrade
 
@@ -54,7 +77,7 @@ To upgrade app, change the value of `global.image.tag` to the desired version
 ```yaml
 global:
   image:
-    tag: "0.6.3"
+    tag: "0.7.0"
 ```
 
 Then upgrade the app with helm command
@@ -63,147 +86,93 @@ Then upgrade the app with helm command
 helm upgrade dify douban/dify -f values.yaml --debug
 ```
 
-**Must** run db migration after upgrade.
 
-```sh
-# run migration
-kubectl exec -it dify-pod-name -- flask db upgrade
-```
-
-## Production use checklist
-
-The minimal configure provided above is sufficient for experiment but **without any persistance**, all your data would be lost if you restarted the postgresql pod or minio pod!!
-
-You **must do**  the following extra work before put it into production!!
-
-### Protect Sensitive info with secret
-
-Environment variable like `SECRET_KEY` could be harmful if leaked, it is adviced to protect them using secret or csi volume.
-
-The example of using secret is like
+## To use it in Production, please configure below enviroment variable
+## The configuration had been verified work on AWS with Managed Services below:
+## RDS Aurora PostgreSQL provisioned and serverless
+## Elasticache for Redis
+## AWS Opensearch
+## S3
 
 ```yaml
-global:
-  extraBackendEnvs:
-  - name: SECRET_KEY
-    valueFrom:
-      secretKeyRef:
-        name: dify
-        key: SECRET_KEY
-```
-
-Read more: <https://kubernetes.io/docs/concepts/security/secrets-good-practices/>
-
-### External postgresql
-
-1. set the `postgresql.embedded` to `false`
-2. inject connection info with `global.extraBackendEnvs`
-
-```yaml
-global:
-  extraBackendEnvs:
+#---------------------------------------------------------------------#
+  # PostgreSQL database
+  # RDS PostgreSQL or Aurora(PostgreSQL Compatatible) Database
   - name: DB_USERNAME
-    value: "foo"
+    value: "postgres"
   # it is adviced to use secret to manage you sensitive info including password
   - name: DB_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: dify
-        key: DB_PASSWORD
+    value: ""
   - name: DB_HOST
-    value: "my_pg.xxx"
+    value: ""
   - name: DB_PORT
-    value: "1234"
+    value: "5432"
   - name: DB_DATABASE
     value: dify
-```
+  
+  #---------------------------------------------------------------------#
+  # Vector DB
+  - name: VECTOR_STORE
+    value: "opensearch"
+    
+  - name: OPENSEARCH_HOST
+    value: ""
+  - name: OPENSEARCH_PORT
+    value: "443"
+  - name: OPENSEARCH_USER
+    value: "admin"
+  - name: OPENSEARCH_PASSWORD
+    value: ""
+  - name: OPENSEARCH_SECURE
+    value: "true"
 
-### External redis
+  # Dify supports different kind of vector DB, please refer to below configuration
+  # https://docs.dify.ai/v/zh-hans/getting-started/install-self-hosted/environments#xiang-liang-shu-ju-ku-pei-zhi
 
-1. set the `redis.embedded` to `false`
-2. inject connection info with `global.extraBackendEnvs`
+  #- name: VECTOR_STORE 
+    #value: "qdrant"
 
-```yaml
-global:
-  extraBackendEnvs:
+  #- name: QDRANT_URL
+  #  value: "http://your_host"
+
+  #---------------------------------------------------------------------#
+  # Redis
+  # Elasticache Redis configuration
   - name: REDIS_HOST
-    value: "foo"
+    value: ""
   - name: REDIS_PORT
     value: "6379"
   - name: REDIS_DB
     value: "1"
-  # it is adviced to use secret to manage you sensitive info including password
+  #- name: REDIS_USERNAME
+  #  value: ""
   - name: REDIS_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: dify
-        key: REDIS_PASSWORD
+    value: ""
+  #- name: REDIS_USE_SSL
+  #  value: "true"
+
+  #---------------------------------------------------------------------#
+  # Celery Configuration
+  # Using below format
+  # redis://<redis_username>:<redis_password>@<redis_host>:<redis_port>/<redis_database>
+  # ex: redis://host:difyai123456@redis:6379/1
+  
   - name: CELERY_BROKER_URL
-    valueFrom:
-      secretKeyRef:
-        name: dify
-        key: CELERY_BROKER_URL
-```
+    value: "redis://host:6379/0"
 
-### External bucket
-
-#### Amazon S3
-
-1. set the `minio.embedded` to `false`
-2. inject connection info with `global.extraBackendEnvs`
-
-```yaml
-global:
-  storageType: "s3"
-  extraBackendEnvs:
+  #---------------------------------------------------------------------# 
+  # S3
   - name: S3_ENDPOINT
-    value: "https://my-endpoint.s3.com"
+    value: "https://your_bucket_name.s3.your_region.amazonaws.com"
   - name: S3_BUCKET_NAME
-    value: "dify"
-  # it is adviced to use secret to manage you sensitive info including password
+    value: "your_bucket_name"
   - name: S3_ACCESS_KEY
-    valueFrom:
-      secretKeyRef:
-        name: dify
-        key: S3_ACCESS_KEY
+    value: ""
   - name: S3_SECRET_KEY
-    valueFrom:
-      secretKeyRef:
-        name: dify
-        key: S3_SECRET_KEY
+    value: ""
+  - name: S3_REGION
+    value: "your_region"
 ```
-
-#### Google Cloud Storage
-
-1. set the `minio.embedded` to `false`
-2. inject connection info with `global.extraBackendEnvs`
-
-```yaml
-global:
-  storageType: "google-storage"
-  extraBackendEnvs:
-  - name: GOOGLE_STORAGE_BUCKET_NAME
-    value: "bucket-name"
-  - name: GOOGLE_STORAGE_SERVICE_ACCOUNT_JSON_BASE64
-    valueFrom:
-      secretKeyRef:
-        name: dify-secret
-        key: GOOGLE_STORAGE_SERVICE_ACCOUNT_JSON_BASE64
-```
-
-### Setup vector db
-
-due to the complexity of vector db, this component is not included, you have to use external vector db, likewise , you can inject environment variable to use it
-
-```yaml
-global:
-  extraBackendEnvs:
-  - name: VECTOR_STORE
-    value: "milvus"
-  - name: MILVUS_HOST
-    value: "my-milvus"
-```
-
-this is not a complete configuration for vector db, please consult to [dify 文档](https://docs.dify.ai/v/zh-hans/getting-started/install-self-hosted/environments) [document](https://docs.dify.ai/getting-started/install-self-hosted/environments) for more info.
+Please consult to [dify 文档](https://docs.dify.ai/v/zh-hans/getting-started/install-self-hosted/environments) [document](https://docs.dify.ai/getting-started/install-self-hosted/environments) for more info.
 
 Please consult to dify document if you have difficult to get dify running.
