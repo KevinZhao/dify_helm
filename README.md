@@ -4,9 +4,11 @@ This helm chart is based on docker-compose provided by dify
 
 this helm is distributed with `Apache License 2.0`
 
-## install
+![Deployment Architecture](https://github.com/KevinZhao/dify_helm/blob/main/doc/Architecture.png?raw=true)
 
-create your own values file , save as `values.yaml`
+## Install
+
+Create your own values file , save as `values.yaml`
 
 ```yaml
 global:
