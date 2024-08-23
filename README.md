@@ -1,4 +1,4 @@
-# dify
+# dify on AWS
 
 This helm chart is based on docker-compose provided by dify
 
