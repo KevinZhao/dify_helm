@@ -90,11 +90,11 @@ helm upgrade dify douban/dify -f values.yaml --debug
 
 
 ## To use it in Production, please configure below enviroment variable
-## The configuration had been verified work on AWS with Managed Services below:
-## RDS Aurora PostgreSQL provisioned and serverless
-## Elasticache for Redis
-## AWS Opensearch
-## S3
+The configuration had been verified work on AWS with Managed Services below:
+RDS Aurora PostgreSQL provisioned and serverless
+Elasticache for Redis
+AWS Opensearch
+S3
 
 ```yaml
 #---------------------------------------------------------------------#
