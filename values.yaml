@@ -106,10 +106,10 @@ global:
     value: "1"
   #- name: REDIS_USERNAME
   #  value: ""
-  - name: REDIS_PASSWORD
-    value: ""
-  #- name: REDIS_USE_SSL
-  #  value: "true"
+  #- name: REDIS_PASSWORD
+  #  value: ""
+  - name: REDIS_USE_SSL
+    value: "true"
 
   #---------------------------------------------------------------------#
   # Celery Configuration
