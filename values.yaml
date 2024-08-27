@@ -108,14 +108,15 @@ global:
   #  value: ""
   #- name: REDIS_PASSWORD
   #  value: ""
-  - name: REDIS_USE_SSL
-    value: "true"
+  #- name: REDIS_USE_SSL
+  #  value: "true"
 
   #---------------------------------------------------------------------#
   # Celery Configuration
   # Using below format
   # redis://<redis_username>:<redis_password>@<redis_host>:<redis_port>/<redis_database>
-  # ex: redis://host:difyai123456@redis:6379/1
+  - name: CELERY_BROKER_URL
+    value: "redis://host:difyai123456@redis:6379/1"
   
   - name: CELERY_BROKER_URL
     value: "redis://host:6379/0"
