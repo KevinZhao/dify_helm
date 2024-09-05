@@ -1,0 +1,470 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Deploy Amazon EKS, Amazon RDS PostgreSQL, Amazon ElastiCache for Redis cluster, Amazon OpenSearch Service and Amazon S3
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: VPC & Private Subnet
+        Parameters:
+          - VPC
+          - EKSSubnets
+          - DBPrivateSubnets
+      - Label:
+          default: 'EKS Cluster Configuration'
+        Parameters:
+          - EKSClusterName
+          - EKSClusterVersion
+          - EndpointPublicAccess
+      - Label:
+          default: 'EKS Node Group Configuration'
+        Parameters:
+          - NodeGroupName
+          - NodeInstanceType
+          - NodeGroupDesiredSize
+          - NodeGroupMinSize
+          - NodeGroupMaxSize
+
+      - Label:
+          default: RDS PostgreSQL
+        Parameters:
+          - DBName
+          - DBEngineVersion
+          - DBInstanceClass
+          - DBMasterUsername
+          - DBMasterUserPassword
+          - DBPort
+      - Label:
+          default: ElastiCache for Redis
+        Parameters:
+          - RedisName
+          - RedisEngineVersion
+          - RedisCacheNodeType
+          - RedisPort
+      - Label:
+          default: Amazon OpenSearch Service
+        Parameters:
+          - OpenSearchDomainName
+          - OpenSearchEngineVersion
+          - OpenSearchDataInstanceType
+          - OpenSearchDataInstanceCount
+          - OpenSearchDedicatedMasterType
+          - OpenSearchMasterUserName
+          - OpenSearchMasterUserPassword
+      - Label:
+          default: Amazon S3
+        Parameters:
+          - S3BucketName
+
+Parameters:
+  # VPC & Subnet Group
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Description: The VPC ID where the resources will be deployed
+  EKSSubnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: The list of public & private subnet IDs where the EKS cluster will be deployed
+  DBPrivateSubnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: The list of private subnet IDs where the Amazon RDS PG, Amazon ElastiCache for Redis, Amazon OpenSearch Service will be deployed
+
+  # Amazon EKS
+  EKSClusterName:
+    Type: String
+    Description: 'Name of the EKS Cluster'
+    Default: 'dify-eks-cluster'
+  EKSClusterVersion:
+    Type: String
+    Description: 'Version of the EKS Cluster'
+    Default: '1.30'
+  EndpointPublicAccess:
+    Type: String
+    Description: 'Enable public access to the EKS cluster endpoint'
+    Default: 'true'
+    AllowedValues:
+      - 'true'
+      - 'false'
+  NodeGroupName:
+    Type: String
+    Description: 'Name of the Node Group'
+    Default: 'my-node-group'
+  NodeInstanceType:
+    Type: String
+    Description: 'Instance type for the Node Group'
+    Default: 'm7i.large'
+  NodeGroupDesiredSize:
+    Type: Number
+    Description: 'Desired number of nodes in the Node Group'
+    Default: 2
+  NodeGroupMinSize:
+    Type: Number
+    Description: 'Minimum number of nodes in the Node Group'
+    Default: 2
+  NodeGroupMaxSize:
+    Type: Number
+    Description: 'Maximum number of nodes in the Node Group'
+    Default: 6
+
+  # RDS PostgreSQL
+  DBName:
+    Type: String
+    Description: The name of the RDS database
+    Default: dify
+  DBEngineVersion:
+    Type: String
+    Description: The engine version for the RDS instance
+    Default: 16.3
+  DBInstanceClass:
+    Type: String
+    Description: The instance class for the RDS instance
+    Default: db.m7g.large
+  DBMasterUsername:
+    Type: String
+    Description: The master username for the RDS instance
+    Default: postgres
+  DBMasterUserPassword:
+    Type: String
+    NoEcho: true
+    Description: The master user password for the RDS instance. At least 8 printable ASCII characters. Can't contain any of the following symbols:/'"@
+    MinLength: 8
+    AllowedPattern: '^(?=.*[a-zA-Z0-9])[^/"@]{8,}$'
+  DBPort:
+    Type: Number
+    Description: The port number for the RDS instance
+    Default: 5432
+
+  # ElastiCache Redis
+  RedisName:
+    Type: String
+    Description: The name of the ElastiCache Redis cluster
+    Default: dify-redis
+  RedisEngineVersion:
+    Type: String
+    Description: The engine version for the ElastiCache Redis cluster
+    Default: 7.1
+  RedisCacheNodeType:
+    Type: String
+    Description: The node type for the ElastiCache Redis cluster
+    Default: cache.r7g.xlarge
+  RedisPort:
+    Type: Number
+    Description: The port number for the ElastiCache Redis cluster
+    Default: 6379
+
+  # OpenSearch
+  OpenSearchDomainName:
+    Type: String
+    Description: The name of the Amazon OpenSearch Service domain
+    Default: dify-aos
+  OpenSearchEngineVersion:
+    Type: String
+    Description: The engine version for the Amazon OpenSearch Service domain
+    Default: OpenSearch_2.3
+  OpenSearchDataInstanceType:
+    Type: String
+    Description: The instance type for the Amazon OpenSearch Service data nodes
+    Default: r6g.large.search
+  OpenSearchDataInstanceCount:
+    Type: Number
+    Description: The number of the Amazon OpenSearch Service data nodes
+    Default: 3
+  OpenSearchDedicatedMasterType:
+    Type: String
+    Description: The instance type for the Amazon OpenSearch Service dedicated master nodes
+    Default: r6g.large.search
+  OpenSearchMasterUserName:
+    Type: String
+    Description: The master username for the Amazon OpenSearch Service domain
+    Default: admin
+  OpenSearchMasterUserPassword:
+    Type: String
+    NoEcho: true
+    Description: The master user password for the Amazon OpenSearch Service domain. The password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.
+    AllowedPattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.])[A-Za-z\d@$!%*?&.]{8,32}$'
+
+  # S3 Bucket
+  S3BucketNamePrefix:
+    Type: String
+    Description: The prefix for the S3 Bucket name
+    Default: dify-s3-bucket
+
+Resources:
+  EKSControlPlaneSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Cluster communication with worker nodes
+      VpcId: !Ref VPC
+
+  EKSControlPlaneSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow worker nodes to communicate with EKS cluster control plane
+      GroupId: !Ref EKSControlPlaneSecurityGroup
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+
+  NodeSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for all nodes in the cluster
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-ClusterSharedNodeSecurityGroup"
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for RDS instance
+      SubnetIds: !Ref DBPrivateSubnets
+
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for RDS instance
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref DBPort
+          ToPort: !Ref DBPort
+          CidrIp: 0.0.0.0/0
+
+  RedisSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Subnet group for ElastiCache Redis cluster
+      SubnetIds: !Ref DBPrivateSubnets
+
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for ElastiCache Redis cluster
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref RedisPort
+          ToPort: !Ref RedisPort
+          CidrIp: 0.0.0.0/0
+
+  OpenSearchSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Amazon OpenSearch Service
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  # Create the EKS cluster
+  EKSCluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: !Ref EKSClusterName
+      Version: !Ref EKSClusterVersion
+      ResourcesVpcConfig:
+        SecurityGroupIds:
+          - !Ref EKSControlPlaneSecurityGroup
+        SubnetIds: !Ref EKSSubnets
+        EndpointPublicAccess: !Ref EndpointPublicAccess
+        EndpointPrivateAccess: true
+      RoleArn: !GetAtt EKSClusterRole.Arn
+
+  # Create the node group
+  NodeGroup:
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      ClusterName: !Ref EKSCluster
+      NodegroupName: !Ref NodeGroupName
+      NodeRole: !GetAtt NodeGroupRole.Arn
+      InstanceTypes:
+        - !Ref NodeInstanceType
+      ScalingConfig:
+        DesiredSize: !Ref NodeGroupDesiredSize
+        MaxSize: !Ref NodeGroupMaxSize
+        MinSize: !Ref NodeGroupMinSize
+      Subnets: !Ref EKSSubnets
+
+  EKSClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: eks.amazonaws.com
+          Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+
+  NodeGroupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+
+  RedisCluster:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      AutomaticFailoverEnabled: true
+      CacheNodeType: cache.r7g.xlarge
+      Engine: redis
+      MultiAZEnabled: true
+      ReplicasPerNodeGroup: 1
+      ReplicationGroupDescription: Redis Cluster
+      NumNodeGroups: 1
+      SecurityGroupIds:
+        - !Ref RedisSecurityGroup
+      CacheSubnetGroupName: !Ref RedisSubnetGroup
+      ReplicationGroupId: !Ref RedisName
+
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      Engine: postgres
+      DBInstanceClass: db.m7g.large
+      AllocatedStorage: 20
+      StorageType: gp3
+      MultiAZ: true
+      DBInstanceIdentifier: dify-rds
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterUserPassword
+      DBName: !Ref DBName
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - !Ref DBSecurityGroup
+      PubliclyAccessible: false
+      BackupRetentionPeriod: 7
+      DeletionProtection: false
+
+  OpenSearchDomain:
+    Type: AWS::OpenSearchService::Domain
+    Properties:
+      DomainName: !Ref OpenSearchDomainName
+      EngineVersion: !Ref OpenSearchEngineVersion
+      ClusterConfig:
+        InstanceCount: 2
+        InstanceType: !Ref OpenSearchDataInstanceType
+        DedicatedMasterEnabled: true
+        DedicatedMasterCount: 3
+        DedicatedMasterType: !Ref OpenSearchDedicatedMasterType
+        ZoneAwarenessEnabled: true
+        ZoneAwarenessConfig:
+          AvailabilityZoneCount: !Ref AWS::NoValue
+      EBSOptions:
+        EBSEnabled: true
+        VolumeType: gp3
+        VolumeSize: 10
+      AccessPolicies:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: '*'
+            Action: 'es:*'
+            Resource: !Sub 'arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${OpenSearchDomainName}/*'
+      AdvancedSecurityOptions:
+        Enabled: true
+        InternalUserDatabaseEnabled: true
+        MasterUserOptions:
+          MasterUserName: !Ref OpenSearchMasterUserName
+          MasterUserPassword: !Ref OpenSearchMasterUserPassword
+      NodeToNodeEncryptionOptions:
+        Enabled: true
+      DomainEndpointOptions:
+        EnforceHTTPS: true
+        TLSSecurityPolicy: Policy-Min-TLS-1-2-2019-07
+      EncryptionAtRestOptions:
+        Enabled: true
+      VPCOptions:
+        SecurityGroupIds:
+          - !Ref OpenSearchSecurityGroup
+        SubnetIds: !Ref DBPrivateSubnets
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action:
+              - 's3:GetObject'
+              - 's3:PutObject'
+              - 's3:DeleteObject'
+            Resource:
+              - !Sub 'arn:aws:s3:::${S3Bucket}/*'
+              - !Sub 'arn:aws:s3:::${S3Bucket}'
+
+Outputs:
+  ClusterName:
+    Description: 'The name of the EKS cluster'
+    Value: !Ref EKSCluster
+    Export:
+      Name: !Sub '${AWS::StackName}-ClusterName'
+
+  DBEndpoint:
+    Description: The connection endpoint for the RDS instance
+    Value: !GetAtt DBInstance.Endpoint.Address
+  DBName:
+    Description: The name of the RDS database
+    Value: !Ref DBName
+  DBMasterUsername:
+    Description: The master username for the RDS instance
+    Value: !Ref DBMasterUsername
+  DBPort:
+    Description: The port number for the RDS instance
+    Value: !Ref DBPort
+
+  RedisEndpoint:
+    Description: The connection endpoint for the ElastiCache Redis cluster
+    Value: !GetAtt RedisCluster.PrimaryEndPoint.Address
+  RedisName:
+    Description: The name of the ElastiCache Redis cluster
+    Value: !Ref RedisName
+  RedisPort:
+    Description: The port number for the ElastiCache Redis cluster
+    Value: !Ref RedisPort
+
+  OpenSearchEndpoint:
+    Description: The endpoint for the Amazon OpenSearch Service domain
+    Value: !GetAtt OpenSearchDomain.DomainEndpoint
+  OpenSearchName:
+    Description: The name of the Amazon OpenSearch Service domain
+    Value: !Ref OpenSearchDomainName
+  OpenSearchMasterUserName:
+    Description: The master username for the Amazon OpenSearch Service domain
+    Value: !Ref OpenSearchMasterUserName
+
+  S3BucketURL:
+    Description: The URL of the created S3 Bucket
+    Value: !Sub 'https://${S3Bucket.RegionalDomainName}'
