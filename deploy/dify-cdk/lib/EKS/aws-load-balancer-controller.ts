@@ -11,16 +11,36 @@ export class ALBCDeploymentStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ALBCDeploymentStackProps) {
     super(scope, id, props);
 
-    // 创建 ALB Load Balancer Controller ServiceAccount
+    // Create ALB Load Balancer Controller ServiceAccount
     const albServiceAccount = props.cluster.addServiceAccount('ALBServiceAccount', {
       name: 'aws-load-balancer-controller',
       namespace: 'kube-system',
     });
 
-    // 为 ALB Controller IAM 角色添加权限
-    albServiceAccount.role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("AWSLoadBalancerControllerIAMPolicy"));
+    // Define the necessary permissions for ALB Load Balancer Controller
+    const albPolicyDocument = new iam.PolicyDocument({
+      statements: [
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            "acm:DescribeCertificate",
+            "acm:ListCertificates",
+            "acm:GetCertificate",
+            // Add all other required actions here
+          ],
+          resources: ["*"],
+        }),
+      ],
+    });
 
-    // 使用 Helm Chart 部署 ALB Load Balancer Controller
+    // Create the inline policy and attach it to the role
+    const albPolicy = new iam.Policy(this, 'ALBControllerPolicy', {
+      document: albPolicyDocument,
+    });
+
+    albServiceAccount.role.attachInlinePolicy(albPolicy);
+
+    // Use Helm Chart to deploy the ALB Load Balancer Controller
     props.cluster.addHelmChart('ALBController', {
       chart: 'aws-load-balancer-controller',
       release: 'aws-load-balancer-controller',
@@ -29,12 +49,10 @@ export class ALBCDeploymentStack extends cdk.Stack {
       values: {
         clusterName: props.cluster.clusterName,
         serviceAccount: {
-          create: false, // 使用我们手动创建的 ServiceAccount
+          create: false, // Use manually created ServiceAccount
           name: albServiceAccount.serviceAccountName,
         },
       },
     });
-
-
   }
 }

@@ -41,6 +41,7 @@ export class EKSClusterStack extends cdk.Stack {
       kubectlLayer: new lambdaLayerKubectl.KubectlV30Layer(this, 'KubectlLayer'), // kubectl Layer
     });
 
+    /*
     // 创建节点组 IAM 角色
     const nodeGroupRole = new iam.Role(this, 'NodeGroupRole', {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
@@ -58,7 +59,7 @@ export class EKSClusterStack extends cdk.Stack {
       desiredSize: this.node.tryGetContext('NodeGroupDesiredSize') || 2,
       maxSize: this.node.tryGetContext('NodeGroupMaxSize') || 4,
       nodeRole: nodeGroupRole,
-    });
+    });*/
 
     // 输出 EKS 集群相关信息
     new cdk.CfnOutput(this, 'ClusterName', {
