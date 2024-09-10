@@ -20,10 +20,11 @@ interface MainStackProps extends StackProps {
 
 //const app = new cdk.App();
 
-export class MyStack extends cdk.Stack {
+export class DifyStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    // Deployment of Managed Services
     // 0. VPC Stack
     const _VpcStack = new VPCStack(this, 'vpc-Stack', {
       /*env: props.env,*/
@@ -34,7 +35,7 @@ export class MyStack extends cdk.Stack {
       /*env: props.env,*/
     });
 
-    // 2. RDS PG Stack
+    // 2. RDS Postgre SQL Stack
     const privateSubnets = _VpcStack.vpc.selectSubnets({subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS});
     const _RdsStack = new RDSStack(this, 'rds-Stack', {
         //env: props.env,
@@ -43,7 +44,6 @@ export class MyStack extends cdk.Stack {
     });
 
     // 3. Redis Stack
-    const redisSubnets = _VpcStack.vpc.selectSubnets({subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS});
     const _Redis = new RedisServerlessStack(this, 'redis-Stack', {
         //env: props.env,
         subnets: privateSubnets,
@@ -51,19 +51,17 @@ export class MyStack extends cdk.Stack {
     });
 
     // 4. EKS Stack
-    const eksSubnets = _VpcStack.vpc.selectSubnets({subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS});
     const _eksCluster = new EKSClusterStack(this, 'eks-Stack', {
       //env: props.env,
       subnets: privateSubnets,
       vpc: _VpcStack.vpc
     });
 
-    // only one time job
     // Deploy ALBC if it doesn't exist
     new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
         cluster: _eksCluster.cluster,})
       
-    new eks.HelmChart(this, 'DifyHelmChart', {
+    const difyHelm = new eks.HelmChart(this, 'DifyHelmChart', {
       cluster: _eksCluster.cluster,
       chart: 'dify',
       repository: 'https://douban.github.io/charts/',
@@ -71,9 +69,9 @@ export class MyStack extends cdk.Stack {
       namespace: 'default',  // 指定命名空间
       values: {
         global: {
-          host: 'www.example.com',
+          host: 'k8s-default-dify-71b66b6f8a-1241212407.us-west-2.elb.amazonaws.com',
           port: '',
-          //enableTLS: true,
+          enableTLS: false,
           image: {
             tag: '0.7.0',
           },
@@ -81,12 +79,16 @@ export class MyStack extends cdk.Stack {
           storageType: 's3',
           extraEnvs: [],
           extraBackendEnvs: [
+            /* SECRET_KEY is a must, A key used to securely sign session cookies and encrypt sensitive information in the database. This variable needs to be set when starting for the first time.You can use "openssl rand -base64 42" to generate a strong key.*/
             { name: 'SECRET_KEY', value: 'd/BV81Qc0hY4BSYzoVPdG9evGco1YBYIxyGBWOrLRFe4nwbKTYGnHQdI'},
+            
+            //RDS PG
             { name: 'DB_USERNAME', value: 'postgres' },
-            { name: 'DB_PASSWORD', value: 'qgLlS08MzLm.LpzgM4zb5^yxMVR7^g' },
-            { name: 'DB_HOST', value: 'dify-db.cluster-cequprvkogfy.us-west-2.rds.amazonaws.com' },
+            { name: 'DB_PASSWORD', value: '4fzG6V7grLGUbBYKLmwvzsaupfQlD.' },  
+            { name: 'DB_HOST', value: 'dify-db.cluster-cwph8hwaravt.ap-northeast-1.rds.amazonaws.com' },
             { name: 'DB_PORT', value: '5432' },
-            /*{ name: 'DB_DATABASE', value: 'dify' },
+            { name: 'DB_DATABASE', value: 'dify' },
+/*
             { name: 'REDIS_HOST', value: 'your_redis_host' },
             { name: 'REDIS_PORT', value: '6379' },
             { name: 'REDIS_DB', value: '1' },*/
@@ -102,10 +104,10 @@ export class MyStack extends cdk.Stack {
             'alb.ingress.kubernetes.io/scheme': 'internet-facing',
             'alb.ingress.kubernetes.io/target-type': 'ip',
             'alb.ingress.kubernetes.io/listen-ports': '[{"HTTPS": 443}, {"HTTP": 80}]',
-            //'alb.ingress.kubernetes.io/certificate-arn': 'arn_of_your_certification',
+            'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:ap-southeast-1:788668107894:certificate/6404aaf8-6051-4637-8d93-d948932b18b6',
           },
           hosts: [{
-            host: 'www.example.com',
+            host: 'k8s-default-dify-71b66b6f8a-1241212407.us-west-2.elb.amazonaws.com',
             paths: [
               { path: '/api', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
               { path: '/v1', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
@@ -128,7 +130,7 @@ export class MyStack extends cdk.Stack {
           embedded: false
         },
         redis: {
-          embedded: true
+          embedded: false
         }
       }
     });

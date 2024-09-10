@@ -41,6 +41,15 @@ export class EKSClusterStack extends cdk.Stack {
       kubectlLayer: new lambdaLayerKubectl.KubectlV30Layer(this, 'KubectlLayer'), // kubectl Layer
     });
 
+    //This is for debug usage
+    const adminUser = iam.User.fromUserName(this, 'AdminUser', 'admin');
+
+    // 将 IAM 用户添加到 system:masters 组
+    this.cluster.awsAuth.addUserMapping(adminUser, {
+      groups: ['system:masters'],
+      username: 'admin',
+    });
+
     /*
     // 创建节点组 IAM 角色
     const nodeGroupRole = new iam.Role(this, 'NodeGroupRole', {
