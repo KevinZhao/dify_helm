@@ -12,6 +12,7 @@ export class S3Stack extends cdk.Stack {
     // S3 存储桶
     this.bucket = new s3.Bucket(this, 'S3Bucket', {
       bucketName: `dify-${this.account}-${this.region}`,
+      removalPolicy: cdk.RemovalPolicy.RETAIN, // 保留 S3 Bucket，即使堆栈删除
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
       versioned: true,

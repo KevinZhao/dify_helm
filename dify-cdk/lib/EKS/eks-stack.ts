@@ -23,6 +23,13 @@ export class EKSClusterStack extends cdk.Stack {
       allowAllOutbound: true,
     });
 
+    eksControlPlaneSecurityGroup.addIngressRule(
+      ec2.Peer.ipv4(props.vpc.vpcCidrBlock),
+      ec2.Port.allTraffic(),
+      'Allow all traffic from within the VPC'
+    );
+
+
     // EKS 集群角色
     const eksClusterRole = new iam.Role(this, 'EKSClusterRole', {
       assumedBy: new iam.ServicePrincipal('eks.amazonaws.com'),
