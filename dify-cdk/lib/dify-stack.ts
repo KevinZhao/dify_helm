@@ -61,8 +61,9 @@ export class DifyStack extends cdk.Stack {
     // 5. Amazon OpenSearch Service Stack
     const _AOSStack = new OpenSearchStack(this, 'aos-Stack', {
       //env: props.env,
-      privateSubnets,
-      vpc: _VpcStack.vpc
+      privateSubnets: privateSubnets,
+      vpc: _VpcStack.vpc,
+      domainName: 'dify-aos',
   });
 
     // Deploy ALBC if it doesn't exist

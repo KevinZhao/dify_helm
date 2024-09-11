@@ -8,6 +8,7 @@ import { Construct } from 'constructs';
 interface OpenSearchStackProps extends cdk.StackProps {
   vpc: cdk.aws_ec2.Vpc;
   privateSubnets: cdk.aws_ec2.SelectedSubnets;
+  domainName: string;
 }
 
 export class OpenSearchStack extends cdk.Stack {
@@ -18,6 +19,7 @@ export class OpenSearchStack extends cdk.Stack {
       vpc: props.vpc,
       description: 'Security group for Amazon OpenSearch Service',
       allowAllOutbound: true,
+
     });
 
     openSearchSecurityGroup.addIngressRule(
@@ -29,7 +31,7 @@ export class OpenSearchStack extends cdk.Stack {
     const openSearchDomain = new opensearch.Domain(this, 'Domain', {
       version: opensearch.EngineVersion.OPENSEARCH_2_13,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-      domainName: 'dify-aos',
+      domainName: props.domainName,
       capacity: {
         multiAzWithStandbyEnabled: false,
         masterNodes: 3,
@@ -57,10 +59,10 @@ export class OpenSearchStack extends cdk.Stack {
       securityGroups: [openSearchSecurityGroup],
       accessPolicies: [
         new iam.PolicyStatement({
-          actions: ['es:*ESHttpPost', 'es:ESHttpPut*'],
+          actions: ['es:*'],
           effect: iam.Effect.ALLOW,
           principals: [new AnyPrincipal()],
-          resources: ['*'],
+          resources: [`arn:aws:es:${this.region}:${this.account}:domain/${props.domainName}/*`],
         }),
       ],
     });
