@@ -10,6 +10,7 @@ import {S3Stack} from './S3/s3-stack';
 import {RDSStack} from './RDS/rds-stack';
 import {RedisServerlessStack} from './redis/redis-stack';
 import {EKSClusterStack} from './EKS/eks-stack';
+import {OpenSearchStack} from './AOS/aos-stack';
 import * as eks from 'aws-cdk-lib/aws-eks';
 import {ALBCDeploymentStack} from './EKS/aws-load-balancer-controller';
 
@@ -19,6 +20,7 @@ interface MainStackProps extends StackProps {
 }*/
 
 //const app = new cdk.App();
+const account = process.env.CDK_DEFAULT_ACCOUNT
 
 export class DifyStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -56,6 +58,13 @@ export class DifyStack extends cdk.Stack {
       subnets: privateSubnets,
       vpc: _VpcStack.vpc
     });
+
+    // 5. Amazon OpenSearch Service Stack
+    const _AOSStack = new OpenSearchStack(this, 'aos-Stack', {
+      //env: props.env,
+      privateSubnets,
+      vpc: _VpcStack.vpc
+  });
 
     // Deploy ALBC if it doesn't exist
     new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
