@@ -9,6 +9,8 @@ interface RedisServerlessStackProps extends cdk.StackProps {
 }
 
 export class RedisServerlessStack extends cdk.Stack {
+  public readonly cluster: elasticache.CfnServerlessCache; // 公共属性
+
   constructor(scope: Construct, id: string, props: RedisServerlessStackProps) {
     super(scope, id, props);
 
@@ -27,12 +29,13 @@ export class RedisServerlessStack extends cdk.Stack {
     );
 
     // Define the Serverless Cache properties
-    const redisServerlessCache = new elasticache.CfnServerlessCache(this, 'RedisServerlessCache', {
+    this.cluster = new elasticache.CfnServerlessCache(this, 'RedisServerlessCache', {
       engine: 'redis',
       serverlessCacheName: 'dify-redis-serverless-cache', // Unique identifier for the cache
       subnetIds: props.subnets.subnetIds,
       securityGroupIds: [redisSecurityGroup.securityGroupId],
       description: 'Dify Redis Serverless Cache',
+      
       // Optional settings
       /*cacheUsageLimits: {
         dataStorage: {

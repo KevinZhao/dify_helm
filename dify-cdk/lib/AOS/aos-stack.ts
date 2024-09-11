@@ -12,6 +12,8 @@ interface OpenSearchStackProps extends cdk.StackProps {
 }
 
 export class OpenSearchStack extends cdk.Stack {
+  public readonly openSearchDomain: opensearch.Domain;
+
   constructor(scope: Construct, id: string, props: OpenSearchStackProps) {
     super(scope, id, props);
 
@@ -27,7 +29,7 @@ export class OpenSearchStack extends cdk.Stack {
       'Allow database connections from within the VPC'
     );
 
-    const openSearchDomain = new opensearch.Domain(this, 'Domain', {
+    this.openSearchDomain = new opensearch.Domain(this, 'Domain', {
       version: opensearch.EngineVersion.OPENSEARCH_2_13,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       domainName: props.domainName,
