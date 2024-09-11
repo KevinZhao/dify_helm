@@ -66,7 +66,13 @@ export class DifyStack extends cdk.Stack {
       rdsSecretArn: _RdsStack.secretArn,
     });
 
-    _eksCluster.addDependency(_RdsStack);
+    // 5. Amazon OpenSearch Service Stack
+    const _AOSStack = new OpenSearchStack(this, 'aos-Stack', {
+      //env: props.env,
+      privateSubnets: privateSubnets,
+      vpc: _VpcStack.vpc,
+      domainName: 'dify-aos',
+  });
 
     // Deploy ALBC if it doesn't exist
     new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
