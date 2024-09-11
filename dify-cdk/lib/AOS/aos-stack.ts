@@ -19,7 +19,6 @@ export class OpenSearchStack extends cdk.Stack {
       vpc: props.vpc,
       description: 'Security group for Amazon OpenSearch Service',
       allowAllOutbound: true,
-
     });
 
     openSearchSecurityGroup.addIngressRule(
