@@ -51,13 +51,6 @@ export class DifyStack extends cdk.Stack {
         vpc: _VpcStack.vpc
     });
 
-    // 4. Amazon OpenSearch Service Stack
-    const _AOSStack = new OpenSearchStack(this, 'aos-Stack', {
-      //env: props.env,
-      privateSubnets,
-      vpc: _VpcStack.vpc
-  	});
-
     // 5. EKS Stack
     const _eksCluster = new EKSClusterStack(this, 'eks-Stack', {
       //env: props.env,
@@ -66,7 +59,7 @@ export class DifyStack extends cdk.Stack {
       rdsSecretArn: _RdsStack.secretArn,
     });
 
-    // 5. Amazon OpenSearch Service Stack
+    // 6. Amazon OpenSearch Service Stack
     const _AOSStack = new OpenSearchStack(this, 'aos-Stack', {
       //env: props.env,
       privateSubnets: privateSubnets,
