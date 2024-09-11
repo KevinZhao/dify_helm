@@ -8,9 +8,9 @@ import { Construct } from 'constructs';
 import {VPCStack} from './VPC/vpc-stack';
 import {S3Stack} from './S3/s3-stack';
 import {RDSStack} from './RDS/rds-stack';
+import {OpenSearchStack} from './AOS/aos-stack';
 import {RedisServerlessStack} from './redis/redis-stack';
 import {EKSClusterStack} from './EKS/eks-stack';
-import {OpenSearchStack} from './AOS/aos-stack';
 import * as eks from 'aws-cdk-lib/aws-eks';
 import {ALBCDeploymentStack} from './EKS/aws-load-balancer-controller';
 
@@ -51,19 +51,22 @@ export class DifyStack extends cdk.Stack {
         vpc: _VpcStack.vpc
     });
 
-    // 4. EKS Stack
-    const _eksCluster = new EKSClusterStack(this, 'eks-Stack', {
-      //env: props.env,
-      subnets: privateSubnets,
-      vpc: _VpcStack.vpc
-    });
-
-    // 5. Amazon OpenSearch Service Stack
+    // 4. Amazon OpenSearch Service Stack
     const _AOSStack = new OpenSearchStack(this, 'aos-Stack', {
       //env: props.env,
       privateSubnets,
       vpc: _VpcStack.vpc
-  });
+  	});
+
+    // 5. EKS Stack
+    const _eksCluster = new EKSClusterStack(this, 'eks-Stack', {
+      //env: props.env,
+      subnets: privateSubnets,
+      vpc: _VpcStack.vpc,
+      rdsSecretArn: _RdsStack.secretArn,
+    });
+
+    _eksCluster.addDependency(_RdsStack);
 
     // Deploy ALBC if it doesn't exist
     new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
@@ -84,21 +87,37 @@ export class DifyStack extends cdk.Stack {
           port: '',
           enableTLS: false,
           image: {
-            tag: '0.7.0',
+            tag: '0.7.2',
           },
           edition: 'SELF_HOSTED',
           storageType: 's3',
           extraEnvs: [],
           extraBackendEnvs: [
             /* SECRET_KEY is a must, A key used to securely sign session cookies and encrypt sensitive information in the database. This variable needs to be set when starting for the first time.You can use "openssl rand -base64 42" to generate a strong key. */
-            { name: 'SECRET_KEY', value: 'd/BV81Qc0hY4BSYzoVPdG9evGco1YBYIxyGBWOrLRFe4nwbKTYGnHQdI'},
+            { name: 'SECRET_KEY', value: 'Put_your_secrets_here'},
             { name: 'DB_USERNAME', value: 'postgres' },
             { name: 'DB_PASSWORD', value: '' },  
-            { name: 'DB_HOST', value: '' },
-            { name: 'DB_PORT', value: '5432' },
+            { name: 'DB_HOST', value: _RdsStack.cluster.clusterEndpoint.hostname },
+            { name: 'DB_PORT', value: _RdsStack.cluster.clusterEndpoint.port.toString() },
             { name: 'DB_DATABASE', value: 'dify' },
-            { name: 'S3_ENDPOINT', value: '' },
-            { name: 'S3_BUCKET_NAME', value: '' },
+            /*
+            { name: 'VECTOR_STORE', value: 'opensearch' },
+            { name: 'OPENSEARCH_HOST', value: _AOSStack.openSearchDomain.domainEndpoint },
+            { name: 'OPENSEARCH_PORT', value: '443' },
+            { name: 'OPENSEARCH_USERNAME', value: 'admin' },
+            { name: 'OPENSEARCH_PASSWORD', value: '1qaz@WSX' },
+            { name: 'OPENSEARCH_SECURE', value: 'true' },*/
+
+            // Redis Serverless
+            /*
+            { name: 'REDIS_HOST', value: _Redis.cluster.attrEndpointAddress },  
+            { name: 'REDIS_PORT', value: _Redis.cluster.attrEndpointPort.toString() },
+            { name: 'REDIS_DB', value: '1' },
+            { name: 'REDIS_USE_SSL', value: 'true' },
+            //{ name: 'CELERY_BROKER_URL', value: 'redis://dify-redis-serverless-cache-rbvvfw.serverless.use2.cache.amazonaws.com:6379/0' },
+            { name: 'CELERY_BROKER_URL', value: 'redis://' + _Redis.cluster.attrEndpointAddress + ':' + _Redis.cluster.attrEndpointPort.toString() + '/0'},*/
+            { name: 'S3_ENDPOINT', value: 'https://' + _S3Stack.bucket.bucketWebsiteDomainName },
+            { name: 'S3_BUCKET_NAME', value: _S3Stack.bucket.bucketName },
             { name: 'S3_ACCESS_KEY', value: '' },
             { name: 'S3_SECRET_KEY', value: '' },
           ],
@@ -202,7 +221,7 @@ export class DifyStack extends cdk.Stack {
           image: {
             repository: 'langgenius/dify-api',
             pullPolicy: 'IfNotPresent',
-            tag: '' // 可以设置为特定的版本，如 "0.7.0"
+            tag: ''
           },
           envs: [
             { name: 'CODE_MAX_NUMBER', value: '9223372036854775807' },
@@ -227,6 +246,7 @@ export class DifyStack extends cdk.Stack {
             // 可以根据需求设置资源请求和限制
           },
 
+          /*
           livenessProbe: {
             httpGet: {
               path: '/health',
@@ -248,7 +268,7 @@ export class DifyStack extends cdk.Stack {
             periodSeconds: 5,
             successThreshold: 1,
             failureThreshold: 10
-          }
+          }*/
         },
 
         worker: {
@@ -256,7 +276,7 @@ export class DifyStack extends cdk.Stack {
           image: {
             repository: 'langgenius/dify-api',
             pullPolicy: 'IfNotPresent',
-            tag: '' // 可以设置为特定的版本，如 "0.7.0"
+            tag: ''
           },
           podAnnotations: {},
           podSecurityContext: {},
@@ -324,19 +344,17 @@ export class DifyStack extends cdk.Stack {
           }
         },
 
-        /*redis: {
+        redis: {
           embedded: true, // 使用内嵌的 Redis
-          architecture: 'standalone', // 独立模式
-          auth: {
-            password: 'REDIS_PASSWORD' // 设置 Redis 密码
-          },
-          master: {
-            persistence: {
-              enabled: false, // 禁用持久化
-              size: '8Gi' // 如果启用持久化，可以设置大小
-            }
-          }
-        }*/
+        },
+
+        postgresql:{
+          embedded: false
+        },
+
+        minio:{
+          embedded: false
+        },
 
       }
     });
