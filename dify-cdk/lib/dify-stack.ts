@@ -20,7 +20,6 @@ interface MainStackProps extends StackProps {
 }*/
 
 //const app = new cdk.App();
-const account = process.env.CDK_DEFAULT_ACCOUNT
 
 export class DifyStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
