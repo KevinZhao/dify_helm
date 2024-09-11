@@ -104,7 +104,12 @@ export class EKSClusterStack extends cdk.Stack {
       namespace: 'kube-system',
     });
     const albPolicy = new iam.Policy(this, 'ALBControllerPolicy');
-    this.applyPolicyFromJson(albPolicy, policyJson);
+
+    // Apply the policy statements
+    policyJson.Statement.forEach((statement: any) => {
+      albPolicy.addStatements(iam.PolicyStatement.fromJson(statement));
+    });
+
     albServiceAccount.role.attachInlinePolicy(albPolicy);
 
     this.cluster.addHelmChart('ALBController', {
