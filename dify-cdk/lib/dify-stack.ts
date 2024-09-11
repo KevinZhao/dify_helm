@@ -36,6 +36,16 @@ export class DifyStack extends cdk.Stack {
       /*env: props.env,*/
     });
 
+    new cdk.CfnOutput(this, '_S3Stack.bucket.bucketNam', {
+      value: _S3Stack.bucket.bucketName,
+      exportName: 'DifyStackbucketWebsiteUrl'
+    });
+
+    new cdk.CfnOutput(this, '_S3Stack.bucket.bucketWebsiteDomainName', {
+      value: _S3Stack.bucket.bucketWebsiteDomainName,
+      exportName: 'DifyStackbucketWebsiteDomainName'
+    });
+
     // 2. RDS Postgre SQL Stack
     const privateSubnets = _VpcStack.vpc.selectSubnets({subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS});
     const _RdsStack = new RDSStack(this, 'rds-Stack', {
@@ -43,6 +53,17 @@ export class DifyStack extends cdk.Stack {
         subnets: privateSubnets,
         vpc: _VpcStack.vpc
     });
+
+    new cdk.CfnOutput(this, '_RdsStack.cluster.clusterEndpoint.hostname', {
+      value: _RdsStack.cluster.clusterEndpoint.hostname,
+      exportName: 'RdsStackclusterclusterEndpointhostname'
+    });
+
+    new cdk.CfnOutput(this, '_RdsStack.cluster.clusterEndpoint.port', {
+      value: _RdsStack.cluster.clusterEndpoint.port.toString(),
+      exportName: 'RdsStackclusterclusterEndpointport'
+    });
+
 
     // 3. Redis Stack
     const _Redis = new RedisServerlessStack(this, 'redis-Stack', {
@@ -55,8 +76,14 @@ export class DifyStack extends cdk.Stack {
     const _AOSStack = new OpenSearchStack(this, 'aos-Stack', {
       //env: props.env,
       privateSubnets,
-      vpc: _VpcStack.vpc
-  	});
+      vpc: _VpcStack.vpc,
+      domainName: 'dify-aos',
+    });
+
+    new cdk.CfnOutput(this, '_AOSStack.openSearchDomain.domainEndpoint', {
+      value: _AOSStack.openSearchDomain.domainEndpoint,
+      exportName: 'AOSStackopenSearchDomaindomainEndpoint'
+    });
 
     // 5. EKS Stack
     const _eksCluster = new EKSClusterStack(this, 'eks-Stack', {
@@ -65,14 +92,6 @@ export class DifyStack extends cdk.Stack {
       vpc: _VpcStack.vpc,
       rdsSecretArn: _RdsStack.secretArn,
     });
-
-    // 5. Amazon OpenSearch Service Stack
-    const _AOSStack = new OpenSearchStack(this, 'aos-Stack', {
-      //env: props.env,
-      privateSubnets: privateSubnets,
-      vpc: _VpcStack.vpc,
-      domainName: 'dify-aos',
-  });
 
     // Deploy ALBC if it doesn't exist
     new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
@@ -89,7 +108,7 @@ export class DifyStack extends cdk.Stack {
       values: {
         global: {
           //Specify your host on ALB DNS name
-          host: '',
+          host: 'k8s-default-dify-6af71544bd-1908415296.us-east-1.elb.amazonaws.com',
           port: '',
           enableTLS: false,
           image: {
@@ -100,32 +119,42 @@ export class DifyStack extends cdk.Stack {
           extraEnvs: [],
           extraBackendEnvs: [
             /* SECRET_KEY is a must, A key used to securely sign session cookies and encrypt sensitive information in the database. This variable needs to be set when starting for the first time.You can use "openssl rand -base64 42" to generate a strong key. */
-            { name: 'SECRET_KEY', value: 'Put_your_secrets_here'},
+            { name: 'SECRET_KEY', value: 'd/BV81Qc0hY4BSYzoVPdG9evGco1YBYIxyGBWOrLRFe4nwbKTYGnHQdI'},
+            { name: 'LOG_LEVEL', value: 'DEBUG'},
+
+            // RDS
             { name: 'DB_USERNAME', value: 'postgres' },
             { name: 'DB_PASSWORD', value: '' },  
             { name: 'DB_HOST', value: _RdsStack.cluster.clusterEndpoint.hostname },
             { name: 'DB_PORT', value: _RdsStack.cluster.clusterEndpoint.port.toString() },
             { name: 'DB_DATABASE', value: 'dify' },
-            /*
+
+            
+            //Opensearch
             { name: 'VECTOR_STORE', value: 'opensearch' },
             { name: 'OPENSEARCH_HOST', value: _AOSStack.openSearchDomain.domainEndpoint },
             { name: 'OPENSEARCH_PORT', value: '443' },
             { name: 'OPENSEARCH_USERNAME', value: 'admin' },
-            { name: 'OPENSEARCH_PASSWORD', value: '1qaz@WSX' },
-            { name: 'OPENSEARCH_SECURE', value: 'true' },*/
+            { name: 'OPENSEARCH_PASSWORD', value: '' },
+            { name: 'OPENSEARCH_SECURE', value: 'true' },
 
             // Redis Serverless
-            /*
+            
             { name: 'REDIS_HOST', value: _Redis.cluster.attrEndpointAddress },  
             { name: 'REDIS_PORT', value: _Redis.cluster.attrEndpointPort.toString() },
             { name: 'REDIS_DB', value: '1' },
             { name: 'REDIS_USE_SSL', value: 'true' },
             //{ name: 'CELERY_BROKER_URL', value: 'redis://dify-redis-serverless-cache-rbvvfw.serverless.use2.cache.amazonaws.com:6379/0' },
-            { name: 'CELERY_BROKER_URL', value: 'redis://' + _Redis.cluster.attrEndpointAddress + ':' + _Redis.cluster.attrEndpointPort.toString() + '/0'},*/
-            { name: 'S3_ENDPOINT', value: 'https://' + _S3Stack.bucket.bucketWebsiteDomainName },
+            { name: 'CELERY_BROKER_URL', value: 'redis://' + _Redis.cluster.attrEndpointAddress + ':' + _Redis.cluster.attrEndpointPort.toString() + '/0'},
+
+            
+            // S3
+            //{ name: 'S3_ENDPOINT', value: 'https://' + _S3Stack.bucket.bucketDomainName },
+            { name: 'S3_ENDPOINT', value: 'https://' + _S3Stack.bucket.bucketName + '.s3.' + this.region + '.' + 'amazonaws.com' },
             { name: 'S3_BUCKET_NAME', value: _S3Stack.bucket.bucketName },
             { name: 'S3_ACCESS_KEY', value: '' },
             { name: 'S3_SECRET_KEY', value: '' },
+            { name: 'S3_Region', value: this.region},
           ],
           labels: []
         },
@@ -142,7 +171,7 @@ export class DifyStack extends cdk.Stack {
             //'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:ap-southeast-1:788668107894:certificate/6404aaf8-6051-4637-8d93-d948932b18b6',
           },
           hosts: [{
-            host: '',
+            host: 'k8s-default-dify-6af71544bd-1908415296.us-east-1.elb.amazonaws.com',
             paths: [
               { path: '/api', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
               { path: '/v1', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
@@ -182,6 +211,7 @@ export class DifyStack extends cdk.Stack {
             type: 'ClusterIP',
             port: 80 // frontend 监听的端口
           },
+
           containerPort: 3000, // 前端容器的端口
           resources: {
             // 可以根据需求设置资源请求和限制
@@ -249,32 +279,32 @@ export class DifyStack extends cdk.Stack {
 
           containerPort: 5001, // API 容器端口
           resources: {
-            // 可以根据需求设置资源请求和限制
+            limits: { cpu: '2', memory: '2Gi' },
+            requests: { cpu: '1', memory: '1Gi' }
           },
 
-          /*
           livenessProbe: {
             httpGet: {
               path: '/health',
               port: 'http'
             },
-            initialDelaySeconds: 30,
-            timeoutSeconds: 5,
+            initialDelaySeconds: 360,
+            timeoutSeconds: 10,
             periodSeconds: 30,
             successThreshold: 1,
-            failureThreshold: 2
+            failureThreshold: 5
           },
           readinessProbe: {
             httpGet: {
               path: '/health',
               port: 'http'
             },
-            initialDelaySeconds: 10,
-            timeoutSeconds: 5,
+            initialDelaySeconds: 120,
+            timeoutSeconds: 10,
             periodSeconds: 5,
             successThreshold: 1,
             failureThreshold: 10
-          }*/
+          }
         },
 
         worker: {
@@ -351,15 +381,25 @@ export class DifyStack extends cdk.Stack {
         },
 
         redis: {
-          embedded: true, // 使用内嵌的 Redis
+          embedded: false, 
         },
 
         postgresql:{
-          embedded: false
+          embedded: false,
+          /*architecture: 'standalone',
+          auth: {
+            postgresPassword: 'testpassword',
+            database: 'dify',
+          },
+          primary: {
+            persistence: {
+              enabled: false,
+            },
+          },*/
         },
 
         minio:{
-          embedded: false
+          embedded: false,
         },
 
       }
