@@ -32,11 +32,11 @@ export class DifyStack extends cdk.Stack {
     });
 
     // 1. S3 Stack
-    const _S3Stack = new S3Stack(this, 's3-Stack', {
-      /*env: props.env,*/
-    });
+    /*const _S3Stack = new S3Stack(this, 's3-Stack', {
+      
+    });*/
 
-    new cdk.CfnOutput(this, '_S3Stack.bucket.bucketNam', {
+    /*new cdk.CfnOutput(this, '_S3Stack.bucket.bucketNam', {
       value: _S3Stack.bucket.bucketName,
       exportName: 'DifyStackbucketWebsiteUrl'
     });
@@ -44,11 +44,11 @@ export class DifyStack extends cdk.Stack {
     new cdk.CfnOutput(this, '_S3Stack.bucket.bucketWebsiteDomainName', {
       value: _S3Stack.bucket.bucketWebsiteDomainName,
       exportName: 'DifyStackbucketWebsiteDomainName'
-    });
+    });*/
 
     // 2. RDS Postgre SQL Stack
     const privateSubnets = _VpcStack.vpc.selectSubnets({subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS});
-    const _RdsStack = new RDSStack(this, 'rds-Stack', {
+    /*const _RdsStack = new RDSStack(this, 'rds-Stack', {
         //env: props.env,
         subnets: privateSubnets,
         vpc: _VpcStack.vpc
@@ -62,18 +62,28 @@ export class DifyStack extends cdk.Stack {
     new cdk.CfnOutput(this, '_RdsStack.cluster.clusterEndpoint.port', {
       value: _RdsStack.cluster.clusterEndpoint.port.toString(),
       exportName: 'RdsStackclusterclusterEndpointport'
-    });
+    });*/
 
 
     // 3. Redis Stack
-    const _Redis = new RedisServerlessStack(this, 'redis-Stack', {
+    /*const _Redis = new RedisServerlessStack(this, 'redis-Stack', {
         //env: props.env,
         subnets: privateSubnets,
         vpc: _VpcStack.vpc
     });
 
+    new cdk.CfnOutput(this, '_Redis.cluster.attrEndpointAddress', {
+      value: _Redis.cluster.attrEndpointAddress,
+      exportName: 'RedisclusterattrEndpointAddress'
+    });
+
+    new cdk.CfnOutput(this, '_Redis.cluster.attrEndpointPort.toString()', {
+      value: _Redis.cluster.attrEndpointPort.toString(),
+      exportName: 'RedisclusterattrEndpointPorttoString'
+    });*/
+
     // 4. Amazon OpenSearch Service Stack
-    const _AOSStack = new OpenSearchStack(this, 'aos-Stack', {
+    /*const _AOSStack = new OpenSearchStack(this, 'aos-Stack', {
       //env: props.env,
       privateSubnets,
       vpc: _VpcStack.vpc,
@@ -83,18 +93,18 @@ export class DifyStack extends cdk.Stack {
     new cdk.CfnOutput(this, '_AOSStack.openSearchDomain.domainEndpoint', {
       value: _AOSStack.openSearchDomain.domainEndpoint,
       exportName: 'AOSStackopenSearchDomaindomainEndpoint'
-    });
+    });*/
 
     // 5. EKS Stack
     const _eksCluster = new EKSClusterStack(this, 'eks-Stack', {
       //env: props.env,
       subnets: privateSubnets,
       vpc: _VpcStack.vpc,
-      rdsSecretArn: _RdsStack.secretArn,
+      //rdsSecretArn: _RdsStack.secretArn,
     });
 
     // Deploy ALBC if it doesn't exist
-    new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
+    const _ALBC = new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
         cluster: _eksCluster.cluster,})
 
 
@@ -108,7 +118,7 @@ export class DifyStack extends cdk.Stack {
       values: {
         global: {
           //Specify your host on ALB DNS name
-          host: 'k8s-default-dify-6af71544bd-1908415296.us-east-1.elb.amazonaws.com',
+          host: 'k8s-default-dify-6af71544bd-1499541672.us-east-1.elb.amazonaws.com',
           port: '',
           enableTLS: false,
           image: {
@@ -123,8 +133,8 @@ export class DifyStack extends cdk.Stack {
             { name: 'LOG_LEVEL', value: 'DEBUG'},
 
             // RDS
-            { name: 'DB_USERNAME', value: 'postgres' },
-            { name: 'DB_PASSWORD', value: '' },  
+            /*{ name: 'DB_USERNAME', value: 'postgres' },
+            { name: 'DB_PASSWORD', value: 'JCuluAdANp1yVS7dErCFbtv0_zD4n1' },  
             { name: 'DB_HOST', value: _RdsStack.cluster.clusterEndpoint.hostname },
             { name: 'DB_PORT', value: _RdsStack.cluster.clusterEndpoint.port.toString() },
             { name: 'DB_DATABASE', value: 'dify' },
@@ -135,26 +145,25 @@ export class DifyStack extends cdk.Stack {
             { name: 'OPENSEARCH_HOST', value: _AOSStack.openSearchDomain.domainEndpoint },
             { name: 'OPENSEARCH_PORT', value: '443' },
             { name: 'OPENSEARCH_USERNAME', value: 'admin' },
-            { name: 'OPENSEARCH_PASSWORD', value: '' },
-            { name: 'OPENSEARCH_SECURE', value: 'true' },
+            { name: 'OPENSEARCH_PASSWORD', value: '1qaz@WSX' },
+            //{ name: 'OPENSEARCH_SECURE', value: 'true' },
 
+            /*
             // Redis Serverless
-            
             { name: 'REDIS_HOST', value: _Redis.cluster.attrEndpointAddress },  
             { name: 'REDIS_PORT', value: _Redis.cluster.attrEndpointPort.toString() },
-            { name: 'REDIS_DB', value: '1' },
+            { name: 'REDIS_DB', value: '0' },
             { name: 'REDIS_USE_SSL', value: 'true' },
-            //{ name: 'CELERY_BROKER_URL', value: 'redis://dify-redis-serverless-cache-rbvvfw.serverless.use2.cache.amazonaws.com:6379/0' },
-            { name: 'CELERY_BROKER_URL', value: 'redis://' + _Redis.cluster.attrEndpointAddress + ':' + _Redis.cluster.attrEndpointPort.toString() + '/0'},
+            { name: 'CELERY_BROKER_URL', value: 'redis://' + _Redis.cluster.attrEndpointAddress + ':' + _Redis.cluster.attrEndpointPort.toString() + '/0'},*/
 
             
             // S3
             //{ name: 'S3_ENDPOINT', value: 'https://' + _S3Stack.bucket.bucketDomainName },
-            { name: 'S3_ENDPOINT', value: 'https://' + _S3Stack.bucket.bucketName + '.s3.' + this.region + '.' + 'amazonaws.com' },
+            /*{ name: 'S3_ENDPOINT', value: 'https://' + _S3Stack.bucket.bucketName + '.s3.' + this.region + '.' + 'amazonaws.com' },
             { name: 'S3_BUCKET_NAME', value: _S3Stack.bucket.bucketName },
             { name: 'S3_ACCESS_KEY', value: '' },
             { name: 'S3_SECRET_KEY', value: '' },
-            { name: 'S3_Region', value: this.region},
+            { name: 'S3_Region', value: this.region},*/
           ],
           labels: []
         },
@@ -166,12 +175,12 @@ export class DifyStack extends cdk.Stack {
             'kubernetes.io/ingress.class': 'alb',
             'alb.ingress.kubernetes.io/scheme': 'internet-facing',
             'alb.ingress.kubernetes.io/target-type': 'ip',
-            'alb.ingress.kubernetes.io/listen-ports': '[{"HTTP": 80}]',
+            'alb.ingress.kubernetes.io/listen-ports': '[{"HTTP": 80}, {"HTTPS": 443}]',
             //'alb.ingress.kubernetes.io/listen-ports': '[{"HTTPS": 443}]',
             //'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:ap-southeast-1:788668107894:certificate/6404aaf8-6051-4637-8d93-d948932b18b6',
           },
           hosts: [{
-            host: 'k8s-default-dify-6af71544bd-1908415296.us-east-1.elb.amazonaws.com',
+            host: 'k8s-default-dify-6af71544bd-1499541672.us-east-1.elb.amazonaws.com',
             paths: [
               { path: '/api', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
               { path: '/v1', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
@@ -381,12 +390,12 @@ export class DifyStack extends cdk.Stack {
         },
 
         redis: {
-          embedded: false, 
+          embedded: true, 
         },
 
         postgresql:{
-          embedded: false,
-          /*architecture: 'standalone',
+          embedded: true,
+          architecture: 'standalone',
           auth: {
             postgresPassword: 'testpassword',
             database: 'dify',
@@ -395,11 +404,11 @@ export class DifyStack extends cdk.Stack {
             persistence: {
               enabled: false,
             },
-          },*/
+          },
         },
 
         minio:{
-          embedded: false,
+          embedded: true,
         },
 
       }
