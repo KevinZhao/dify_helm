@@ -118,7 +118,7 @@ export class DifyStack extends cdk.Stack {
       values: {
         global: {
           //Specify your host on ALB DNS name
-          host: 'k8s-default-dify-6af71544bd-1499541672.us-east-1.elb.amazonaws.com',
+          host: '',
           port: '',
           enableTLS: false,
           image: {
@@ -180,7 +180,7 @@ export class DifyStack extends cdk.Stack {
             //'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:ap-southeast-1:788668107894:certificate/6404aaf8-6051-4637-8d93-d948932b18b6',
           },
           hosts: [{
-            host: 'k8s-default-dify-6af71544bd-1499541672.us-east-1.elb.amazonaws.com',
+            host: '',
             paths: [
               { path: '/api', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
               { path: '/v1', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
