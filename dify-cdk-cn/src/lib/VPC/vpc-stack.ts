@@ -2,15 +2,18 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 
+interface VPCStackProps extends cdk.StackProps {
+  vpcName: string;
+}
+
 export class VPCStack extends cdk.Stack {
   public readonly vpc: ec2.Vpc;
-  public readonly publicSubnets: ec2.ISubnet[];
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: VPCStackProps) {
     super(scope, id, props);
 
       // Create a VPC
-      const vpc = new ec2.Vpc(this, 'DifyVpc', {
+      const vpc = new ec2.Vpc(this, props.vpcName, {
           maxAzs: 2, 
           natGateways: 1,
           subnetConfiguration: [

@@ -4,16 +4,20 @@ import * as elasticache from 'aws-cdk-lib/aws-elasticache';
 import { Construct } from 'constructs';
 
 interface RedisStackProps extends cdk.StackProps {
+  redisClusterName: string;
+  prefix: string;
   vpc: ec2.Vpc;
   subnets: ec2.SelectedSubnets;
 }
 
 export class RedisStack extends cdk.Stack {
+  public readonly redisCluster: elasticache.CfnReplicationGroup;
+
   constructor(scope: Construct, id: string, props: RedisStackProps) {
     super(scope, id, props);
 
     // Create a Security Group for ElastiCache Redis
-    const redisSecurityGroup = new ec2.SecurityGroup(this, 'RedisSecurityGroup', {
+    const redisSecurityGroup = new ec2.SecurityGroup(this, `${props.prefix}-redis-security-group`, {
       vpc: props.vpc,
       description: 'Security group for ElastiCache Redis',
       allowAllOutbound: true,
@@ -26,13 +30,13 @@ export class RedisStack extends cdk.Stack {
     );
 
     // Create a subnet group for the Redis cluster
-    const redisSubnetGroup = new elasticache.CfnSubnetGroup(this, 'RedisSubnetGroup', {
+    const redisSubnetGroup = new elasticache.CfnSubnetGroup(this, props.prefix + `${props.prefix}-redis-subnet-group`, {
       description: 'Subnet group for Redis cluster',
       subnetIds: props.subnets.subnetIds,
     });
 
     // Create a Redis parameter group
-    const redisParameterGroup = new elasticache.CfnParameterGroup(this, 'RedisParameterGroup', {
+    const redisParameterGroup = new elasticache.CfnParameterGroup(this, props.prefix + `${props.prefix}-redis-parameter-group`, {
       cacheParameterGroupFamily: 'redis7',
       description: 'Parameter group for Redis 7.x cluster',
       properties: {
@@ -40,8 +44,8 @@ export class RedisStack extends cdk.Stack {
       },
     });
 
-    // Create the Redis cluster
-    const redisCluster = new elasticache.CfnReplicationGroup(this, 'RedisCluster', {
+    // Create the Redis cluster with cluster mode enabled
+    this.redisCluster = new elasticache.CfnReplicationGroup(this, props.redisClusterName, {
       replicationGroupDescription: 'Redis cluster for Dify',
       engine: 'redis',
       cacheNodeType: 'cache.t3.medium',
@@ -59,14 +63,14 @@ export class RedisStack extends cdk.Stack {
 
     // Output the Redis cluster endpoint
     new cdk.CfnOutput(this, 'RedisClusterEndpoint', {
-      value: redisCluster.attrPrimaryEndPointAddress,
+      value: this.redisCluster.attrPrimaryEndPointAddress,
       description: 'Redis Cluster Endpoint',
       exportName: 'RedisClusterEndpoint',
     });
 
     // Output the Redis cluster port
     new cdk.CfnOutput(this, 'RedisClusterPort', {
-      value: redisCluster.attrPrimaryEndPointPort,
+      value: this.redisCluster.attrPrimaryEndPointPort,
       description: 'Redis Cluster Port',
       exportName: 'RedisClusterPort',
     });

@@ -5,13 +5,15 @@ import { Construct } from 'constructs';
 import { Duration } from 'aws-cdk-lib';
 
 interface RDSStackProps extends cdk.StackProps {
+  userName: string;
+  dbName: string;
   subnets: cdk.aws_ec2.SelectedSubnets;
   vpc: ec2.Vpc;
 }
 
 export class RDSStack extends cdk.Stack {
-  public readonly secretArn: string;
-
+  public readonly cluster: rds.DatabaseCluster;
+ 
   constructor(scope: Construct, id: string, props: RDSStackProps) {
     super(scope, id, props);
 
@@ -21,15 +23,9 @@ export class RDSStack extends cdk.Stack {
       allowAllOutbound: true
     });
 
-    dbSecurityGroup.addIngressRule(
-      ec2.Peer.ipv4(props.vpc.vpcCidrBlock),
-      ec2.Port.tcp(5432),
-      'Allow database connections from within the VPC'
-    );
-
     const instanceType = ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MEDIUM);
 
-    const cluster = new rds.DatabaseCluster(this, 'AuroraCluster', {
+    this.cluster = new rds.DatabaseCluster(this, 'AuroraCluster', {
       engine: rds.DatabaseClusterEngine.auroraPostgres({ version: rds.AuroraPostgresEngineVersion.VER_15_4 }),
       writer: rds.ClusterInstance.provisioned('Writer', {
         instanceType: instanceType,
@@ -41,9 +37,9 @@ export class RDSStack extends cdk.Stack {
       ],
       vpc: props.vpc,
       vpcSubnets: props.subnets,
-      credentials: rds.Credentials.fromGeneratedSecret('postgres'),
-      clusterIdentifier: 'dify-db',
-      defaultDatabaseName: 'dify',
+      credentials: rds.Credentials.fromGeneratedSecret(props.userName),
+      clusterIdentifier: props.dbName + '-db',
+      defaultDatabaseName: props.dbName,
       securityGroups: [dbSecurityGroup],
       removalPolicy: cdk.RemovalPolicy.SNAPSHOT, // Optional: add snapshot after removal
       backup: {
@@ -51,12 +47,25 @@ export class RDSStack extends cdk.Stack {
       },
     });
 
-    this.secretArn = cluster.secret!.secretArn;
+    dbSecurityGroup.addIngressRule(
+      ec2.Peer.ipv4(props.vpc.vpcCidrBlock),
+      ec2.Port.tcp(this.cluster.clusterEndpoint.port),
+      'Allow database connections from within the VPC'
+    );
 
     new cdk.CfnOutput(this, 'RDSSecretArn', {
-      value: this.secretArn,
-      description: 'The ARN of the RDS Secret',
+      value: this.cluster.secret!.secretArn,
       exportName: 'RDSSecretArn',
+    });
+
+    new cdk.CfnOutput(this, 'RDSClusterEndpointHostname', {
+      value: this.cluster.clusterEndpoint.hostname,
+      exportName: 'RDSClusterEndpointHostname'
+    });
+
+    new cdk.CfnOutput(this, 'RDSClusterEndpointPort', {
+      value: this.cluster.clusterEndpoint.port.toString(),
+      exportName: 'RDSClusterEndpointPort'
     });
   }
 }

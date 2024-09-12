@@ -7,11 +7,24 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { KubectlV30Layer } from '@aws-cdk/lambda-layer-kubectl-v30';
 import { Construct } from 'constructs';
+import * as child_process from 'child_process';
 
 export interface EKSClusterStackProps extends cdk.StackProps {
   vpc: ec2.IVpc;
   subnets: ec2.ISubnet[];
+
+  // S3 props
+  s3BucketName: string;
+  s3Endpoint: string;
+  s3AccessKey: string;
+  s3SecretKey: string;
+
+  // RDSStack props
   rdsSecretArn: string;
+  rdsClusterEndpointHostname: string;
+  rdsClusterEndpointPort: string;
+  rdsUserName: string;
+  rdsDbName: string;
 }
 
 export class EKSClusterStack extends cdk.Stack {
@@ -24,7 +37,7 @@ export class EKSClusterStack extends cdk.Stack {
     this.setupSecretsManager(props);
     this.installCSIDriver();
     this.setupALBController();
-    this.deployDifyHelmChart();
+    this.deployDifyHelmChart(props);
   }
 
   private createEKSCluster(props: EKSClusterStackProps) {
@@ -127,18 +140,18 @@ export class EKSClusterStack extends cdk.Stack {
     });
   }
 
-  private deployDifyHelmChart() {
+  private deployDifyHelmChart(props: EKSClusterStackProps) {
     new eks.HelmChart(this, 'DifyHelmChart', {
       cluster: this.cluster,
       chart: 'dify',
       repository: 'https://douban.github.io/charts/',
       release: 'dify',
       namespace: 'default',
-      values: this.getDifyHelmChartValues(),
+      values: this.getDifyHelmChartValues(props),
     });
   }
 
-  private getDifyHelmChartValues() {
+  private getDifyHelmChartValues(props: EKSClusterStackProps) {
     return {
       global: {
         host: '',
@@ -150,7 +163,7 @@ export class EKSClusterStack extends cdk.Stack {
         edition: 'SELF_HOSTED',
         storageType: 's3',
         extraEnvs: [],
-        extraBackendEnvs: this.getDifyBackendEnvs(),
+        extraBackendEnvs: this.getDifyBackendEnvs(props),
         labels: []
       },
       ingress: this.getIngressConfig(),
@@ -163,15 +176,26 @@ export class EKSClusterStack extends cdk.Stack {
     };
   }
 
-  private getDifyBackendEnvs() {
+  private getDifyBackendEnvs(props: EKSClusterStackProps) {
+    const secretKey = this.generateSecretKey();
     return [
-      { name: 'SECRET_KEY', value: '' },
+      { name: 'SECRET_KEY', value: secretKey },
+      { name: 'DEBUG', value: 'true'}, // turn on debug mode
+      { name: 'DEPLOY_ENV', value: 'TESTING' }, // PRODUCTION
+
+      // S3 values come from ../S3/s3-stack.ts
+      { name: 'S3_ENDPOINT', value: '' },
+      { name: 'S3_BUCKET_NAME', value: props.s3BucketName },
+      { name: 'S3_ACCESS_KEY', value: '' },
+      { name: 'S3_SECRET_KEY', value: '' },
+
       // RDS values come from ../RDS/rds-stack.ts
-      { name: 'DB_USERNAME', value: '' },
-      { name: 'DB_PASSWORD', value: '' },
-      { name: 'DB_HOST', value: '' },
-      { name: 'DB_PORT', value: '' },
-      { name: 'DB_DATABASE', value: '' },
+      { name: 'DB_USERNAME', value: props.rdsUserName },
+      { name: 'DB_PASSWORD', value: '' }, // TODO: get password from secret arn
+      { name: 'DB_HOST', value: props.rdsClusterEndpointHostname },
+      { name: 'DB_PORT', value: props.rdsClusterEndpointPort },
+      { name: 'DB_DATABASE', value: props.rdsDbName },
+
       // OpenSearch values come from ../AOS/aos-stack.ts
       { name: 'VECTOR_STORE', value: '' },
       { name: 'OPENSEARCH_HOST', value: '' },
@@ -179,17 +203,13 @@ export class EKSClusterStack extends cdk.Stack {
       { name: 'OPENSEARCH_USERNAME', value: '' },
       { name: 'OPENSEARCH_PASSWORD', value: '' },
       { name: 'OPENSEARCH_SECURE', value: 'true' },
+
       // Redis values come from ../REDIS/redis-stack.ts
       { name: 'REDIS_HOST', value: '' },
       { name: 'REDIS_PORT', value: '' },
       { name: 'REDIS_DB', value: '' },
       { name: 'REDIS_USE_SSL', value: 'true' },
       { name: 'CELERY_BROKER_URL', value: '' },
-      // S3 values come from ../S3/s3-stack.ts
-      { name: 'S3_ENDPOINT', value: '' },
-      { name: 'S3_BUCKET_NAME', value: '' },
-      { name: 'S3_ACCESS_KEY', value: '' },
-      { name: 'S3_SECRET_KEY', value: '' },
     ];
   }
 
@@ -239,12 +259,12 @@ export class EKSClusterStack extends cdk.Stack {
     };
   }
 
-  private applyPolicyFromJson(policy: iam.Policy, policyJson: any) {
-    policyJson.Statement.forEach((statement: any) => {
-      policy.addStatements(new iam.PolicyStatement({
-        actions: statement.Action,
-        resources: statement.Resource || ['*'],
-      }));
-    });
+  private generateSecretKey(): string {
+  try {
+    const openSslOutput = child_process.execSync('openssl rand -base64 42').toString().trim();
+    return openSslOutput;
+  } catch (error) {
+    throw new Error('Failed to generate SECRET_KEY: ' + error);
   }
+}
 }
