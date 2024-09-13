@@ -7,7 +7,7 @@ import { Construct } from 'constructs';
 
 interface OpenSearchStackProps extends cdk.StackProps {
   vpc: cdk.aws_ec2.Vpc;
-  privateSubnets: cdk.aws_ec2.SelectedSubnets;
+  subnets: cdk.aws_ec2.SelectedSubnets;
   domainName: string;
 }
 

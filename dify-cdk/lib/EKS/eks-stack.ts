@@ -2,8 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as eks from 'aws-cdk-lib/aws-eks';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as rds from 'aws-cdk-lib/aws-rds';
-import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+import {ALBCDeploymentStack} from './aws-load-balancer-controller';
 import * as lambdaLayerKubectl from '@aws-cdk/lambda-layer-kubectl-v30'; // 引入 kubectl v30
 import { Construct } from 'constructs';
 
@@ -13,7 +12,7 @@ interface EKSClusterStackProps extends cdk.StackProps {
   //rdsSecretArn: string; // 使用 RDSStack 的输出
 }
 
-export class EKSClusterStack extends cdk.Stack {
+export class EKSStack extends cdk.Stack {
   public readonly cluster: eks.Cluster;
 
   constructor(scope: Construct, id: string, props: EKSClusterStackProps) {
@@ -59,6 +58,10 @@ export class EKSClusterStack extends cdk.Stack {
       groups: ['system:masters'],
       username: 'admin',
     });
+
+    // Deploy ALBC if it doesn't exist
+    const _ALBC = new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
+      cluster: this.cluster,})
 
     // 从 Secrets Manager 获取 RDS 密码
     /*const rdsSecret = secretsmanager.Secret.fromSecretCompleteArn(this, 'RDSSecret', props.rdsSecretArn);

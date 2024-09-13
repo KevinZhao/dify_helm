@@ -1,116 +1,20 @@
-import {StackProps, CfnParameter, CfnOutput} from 'aws-cdk-lib';
 import * as cdk from 'aws-cdk-lib';
-import * as ec2 from 'aws-cdk-lib/aws-ec2';
-
 import { Construct } from 'constructs';
 
 // Local definition
-import {VPCStack} from './VPC/vpc-stack';
-import {S3Stack} from './S3/s3-stack';
-import {RDSStack} from './RDS/rds-stack';
-import {OpenSearchStack} from './AOS/aos-stack';
-import {RedisServerlessStack} from './redis/redis-stack';
-import {EKSClusterStack} from './EKS/eks-stack';
 import * as eks from 'aws-cdk-lib/aws-eks';
-import {ALBCDeploymentStack} from './EKS/aws-load-balancer-controller';
 
-/*
-interface MainStackProps extends StackProps {
-  deployRds?: boolean;
-}*/
+interface DifyHelmStackProps extends cdk.StackProps {
+  cluster: eks.Cluster;
+}
 
-//const app = new cdk.App();
-
-export class DifyStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+export class DifyHelmStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: DifyHelmStackProps) {
     super(scope, id, props);
-
-    // Deployment of Managed Services
-    // 0. VPC Stack
-    const _VpcStack = new VPCStack(this, 'vpc-Stack', {
-      /*env: props.env,*/
-    });
-
-    // 1. S3 Stack
-    /*const _S3Stack = new S3Stack(this, 's3-Stack', {
-      
-    });*/
-
-    /*new cdk.CfnOutput(this, '_S3Stack.bucket.bucketNam', {
-      value: _S3Stack.bucket.bucketName,
-      exportName: 'DifyStackbucketWebsiteUrl'
-    });
-
-    new cdk.CfnOutput(this, '_S3Stack.bucket.bucketWebsiteDomainName', {
-      value: _S3Stack.bucket.bucketWebsiteDomainName,
-      exportName: 'DifyStackbucketWebsiteDomainName'
-    });*/
-
-    // 2. RDS Postgre SQL Stack
-    const privateSubnets = _VpcStack.vpc.selectSubnets({subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS});
-    /*const _RdsStack = new RDSStack(this, 'rds-Stack', {
-        //env: props.env,
-        subnets: privateSubnets,
-        vpc: _VpcStack.vpc
-    });
-
-    new cdk.CfnOutput(this, '_RdsStack.cluster.clusterEndpoint.hostname', {
-      value: _RdsStack.cluster.clusterEndpoint.hostname,
-      exportName: 'RdsStackclusterclusterEndpointhostname'
-    });
-
-    new cdk.CfnOutput(this, '_RdsStack.cluster.clusterEndpoint.port', {
-      value: _RdsStack.cluster.clusterEndpoint.port.toString(),
-      exportName: 'RdsStackclusterclusterEndpointport'
-    });*/
-
-
-    // 3. Redis Stack
-    /*const _Redis = new RedisServerlessStack(this, 'redis-Stack', {
-        //env: props.env,
-        subnets: privateSubnets,
-        vpc: _VpcStack.vpc
-    });
-
-    new cdk.CfnOutput(this, '_Redis.cluster.attrEndpointAddress', {
-      value: _Redis.cluster.attrEndpointAddress,
-      exportName: 'RedisclusterattrEndpointAddress'
-    });
-
-    new cdk.CfnOutput(this, '_Redis.cluster.attrEndpointPort.toString()', {
-      value: _Redis.cluster.attrEndpointPort.toString(),
-      exportName: 'RedisclusterattrEndpointPorttoString'
-    });*/
-
-    // 4. Amazon OpenSearch Service Stack
-    /*const _AOSStack = new OpenSearchStack(this, 'aos-Stack', {
-      //env: props.env,
-      privateSubnets,
-      vpc: _VpcStack.vpc,
-      domainName: 'dify-aos',
-    });
-
-    new cdk.CfnOutput(this, '_AOSStack.openSearchDomain.domainEndpoint', {
-      value: _AOSStack.openSearchDomain.domainEndpoint,
-      exportName: 'AOSStackopenSearchDomaindomainEndpoint'
-    });*/
-
-    // 5. EKS Stack
-    const _eksCluster = new EKSClusterStack(this, 'eks-Stack', {
-      //env: props.env,
-      subnets: privateSubnets,
-      vpc: _VpcStack.vpc,
-      //rdsSecretArn: _RdsStack.secretArn,
-    });
-
-    // Deploy ALBC if it doesn't exist
-    const _ALBC = new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
-        cluster: _eksCluster.cluster,})
-
 
     // Here comes dify helm configuration  
     const difyHelm = new eks.HelmChart(this, 'DifyHelmChart', {
-      cluster: _eksCluster.cluster,
+      cluster: props.cluster,
       chart: 'dify',
       repository: 'https://douban.github.io/charts/',
       release: 'dify',
@@ -118,7 +22,7 @@ export class DifyStack extends cdk.Stack {
       values: {
         global: {
           //Specify your host on ALB DNS name
-          host: '',
+          host: 'k8s-default-dify-bd3744a9ac-43388940.eu-central-1.elb.amazonaws.com',
           port: '',
           enableTLS: false,
           image: {
@@ -180,7 +84,7 @@ export class DifyStack extends cdk.Stack {
             //'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:ap-southeast-1:788668107894:certificate/6404aaf8-6051-4637-8d93-d948932b18b6',
           },
           hosts: [{
-            host: '',
+            host: 'k8s-default-dify-bd3744a9ac-43388940.eu-central-1.elb.amazonaws.com',
             paths: [
               { path: '/api', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
               { path: '/v1', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
