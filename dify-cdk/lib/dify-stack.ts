@@ -122,7 +122,7 @@ export class DifyStack extends cdk.Stack {
           port: '',
           enableTLS: false,
           image: {
-            tag: '0.7.2',
+            tag: '0.8.0',
           },
           edition: 'SELF_HOSTED',
           storageType: 's3',
