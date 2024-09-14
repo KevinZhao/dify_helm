@@ -175,7 +175,7 @@ export class DifyStack extends cdk.Stack {
             'kubernetes.io/ingress.class': 'alb',
             'alb.ingress.kubernetes.io/scheme': 'internet-facing',
             'alb.ingress.kubernetes.io/target-type': 'ip',
-            'alb.ingress.kubernetes.io/listen-ports': '[{"HTTP": 80}, {"HTTPS": 443}]',
+            'alb.ingress.kubernetes.io/listen-ports': '[{"HTTP": 80}]',
             //'alb.ingress.kubernetes.io/listen-ports': '[{"HTTPS": 443}]',
             //'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:ap-southeast-1:788668107894:certificate/6404aaf8-6051-4637-8d93-d948932b18b6',
           },
