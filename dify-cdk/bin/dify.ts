@@ -11,36 +11,42 @@ import { EKSStack } from '../lib/EKS/eks-stack';
 
 const app = new cdk.App();
 
+/*----------------------------------------------------------------------------------------------*/
 // 0. deploy VPC 
-const vpcStack = new VPCStack(app, 'VPCStack');
+const vpcStack = new VPCStack(app, 'DifyVPCStack');
 const privateSubnets = vpcStack.vpc.selectSubnets({subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS});
 
 // 1. deploy the rest that depends on VPC
 // This can be by concurrent deploy by execution:
 // cdk deploy --all --concurrency 5 --require-approval never
-const s3Stack = new S3Stack(app, 'S3Stack');
+/*----------------------------------------------------------------------------------------------*/
+const s3Stack = new S3Stack(app, 'DifyS3Stack');
 
-const rdsStack = new RDSStack(app, 'RDSStack', { 
+const rdsStack = new RDSStack(app, 'DifyRDSStack', { 
     vpc: vpcStack.vpc,
     subnets: privateSubnets 
-});
+}); 
 
-const redisServerlessStack = new RedisServerlessStack(app, 'RedisStack', {
+const redisServerlessStack = new RedisServerlessStack(app, 'DifyRedisStack', {
     vpc: vpcStack.vpc,
     subnets: privateSubnets
 });
     
-const openSearchStack = new OpenSearchStack(app, 'OpenSearchStack', {
+const openSearchStack = new OpenSearchStack(app, 'DifyOpenSearchStack', {
     vpc: vpcStack.vpc,
     subnets: privateSubnets,
     domainName: 'dify-aos'
 });
 
-const eksStack = new EKSStack(app, 'EKSStack', {
+const eksStack = new EKSStack(app, 'DifyEKSStack', {
     vpc: vpcStack.vpc,
     subnets: privateSubnets });
+/*----------------------------------------------------------------------------------------------*/
 
 // 2. deploy dify helm
-new DifyHelmStack(app, 'DifyStack', {
+const difyHelmStack = new DifyHelmStack(app, 'DifyStack', {
     cluster: eksStack.cluster
 });
+
+// 设置 difyHelmStack 依赖于 eksStack
+difyHelmStack.addDependency(eksStack);

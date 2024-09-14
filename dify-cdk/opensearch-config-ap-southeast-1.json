@@ -1,0 +1,112 @@
+{
+    "DomainStatus": {
+        "DomainId": "788668107894/dify",
+        "DomainName": "dify",
+        "ARN": "arn:aws:es:ap-southeast-1:788668107894:domain/dify",
+        "Created": true,
+        "Deleted": false,
+        "Endpoints": {
+            "vpc": "vpc-dify-ijpz5vscv6yfioqpuew2vovhkm.ap-southeast-1.es.amazonaws.com"
+        },
+        "Processing": false,
+        "UpgradeProcessing": false,
+        "EngineVersion": "OpenSearch_2.13",
+        "ClusterConfig": {
+            "InstanceType": "r6g.large.search",
+            "InstanceCount": 3,
+            "DedicatedMasterEnabled": true,
+            "ZoneAwarenessEnabled": true,
+            "ZoneAwarenessConfig": {
+                "AvailabilityZoneCount": 3
+            },
+            "DedicatedMasterType": "m6g.large.search",
+            "DedicatedMasterCount": 3,
+            "WarmEnabled": false,
+            "ColdStorageOptions": {
+                "Enabled": false
+            },
+            "MultiAZWithStandbyEnabled": true
+        },
+        "EBSOptions": {
+            "EBSEnabled": true,
+            "VolumeType": "gp3",
+            "VolumeSize": 100,
+            "Iops": 3000,
+            "Throughput": 125
+        },
+        "AccessPolicies": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"*\"},\"Action\":\"es:*\",\"Resource\":\"arn:aws:es:ap-southeast-1:788668107894:domain/dify/*\"}]}",
+        "IPAddressType": "ipv4",
+        "SnapshotOptions": {},
+        "VPCOptions": {
+            "VPCId": "vpc-01107f39ea9990db8",
+            "SubnetIds": [
+                "subnet-07a83ab2bb7ff0b7d",
+                "subnet-0b5cd69072260407d",
+                "subnet-0ba43b0af1bd11c75"
+            ],
+            "AvailabilityZones": [
+                "ap-southeast-1a",
+                "ap-southeast-1c",
+                "ap-southeast-1b"
+            ],
+            "SecurityGroupIds": [
+                "sg-09b7f4c319e12f699"
+            ]
+        },
+        "CognitoOptions": {
+            "Enabled": false
+        },
+        "EncryptionAtRestOptions": {
+            "Enabled": true,
+            "KmsKeyId": "arn:aws:kms:ap-southeast-1:788668107894:key/50271abe-8bd4-4185-94cf-cf055d09cf60"
+        },
+        "NodeToNodeEncryptionOptions": {
+            "Enabled": true
+        },
+        "AdvancedOptions": {
+            "indices.fielddata.cache.size": "20",
+            "indices.query.bool.max_clause_count": "1024",
+            "override_main_response_version": "false",
+            "rest.action.multi.allow_explicit_index": "true"
+        },
+        "ServiceSoftwareOptions": {
+            "CurrentVersion": "OpenSearch_2_13_R20240520-P5",
+            "NewVersion": "",
+            "UpdateAvailable": false,
+            "Cancellable": false,
+            "UpdateStatus": "COMPLETED",
+            "Description": "There is no software update available for this domain.",
+            "AutomatedUpdateDate": "1970-01-01T08:00:00+08:00",
+            "OptionalDeployment": true
+        },
+        "DomainEndpointOptions": {
+            "EnforceHTTPS": true,
+            "TLSSecurityPolicy": "Policy-Min-TLS-1-2-2019-07",
+            "CustomEndpointEnabled": false
+        },
+        "AdvancedSecurityOptions": {
+            "Enabled": true,
+            "InternalUserDatabaseEnabled": true,
+            "AnonymousAuthEnabled": false
+        },
+        "AutoTuneOptions": {
+            "State": "ENABLED",
+            "UseOffPeakWindow": false
+        },
+        "ChangeProgressDetails": {
+            "ChangeId": "cafecdf3-cc13-4476-8240-9c5bab0dd0cb"
+        },
+        "OffPeakWindowOptions": {
+            "Enabled": true,
+            "OffPeakWindow": {
+                "WindowStartTime": {
+                    "Hours": 0,
+                    "Minutes": 0
+                }
+            }
+        },
+        "SoftwareUpdateOptions": {
+            "AutoSoftwareUpdateEnabled": false
+        }
+    }
+}

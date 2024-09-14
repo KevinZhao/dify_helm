@@ -35,24 +35,7 @@ export class RedisServerlessStack extends cdk.Stack {
       subnetIds: props.subnets.subnetIds,
       securityGroupIds: [redisSecurityGroup.securityGroupId],
       description: 'Dify Redis Serverless Cache',
-      
-      // Optional settings
-      /*cacheUsageLimits: {
-        dataStorage: {
-          unit: 'GB', // Specify the unit of storage
-          maximum: 5000, // Maximum storage
-          minimum: 1
-        },
-        ecpuPerSecond: {
-          maximum: 15000000, // Max eCPU units
-          minimum: 1000, // Min eCPU units
-        },
-      },*/
-      //snapshotRetentionLimit: 7, // Number of snapshots to retain
-      //dailySnapshotTime: '02:00', // Optional: time for daily snapshot
-      //kmsKeyId: 'your-kms-key-id', // Optional: KMS encryption key for data at rest
     });
 
-    //redisServerlessCache.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
   }
 }

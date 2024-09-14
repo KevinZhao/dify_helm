@@ -22,7 +22,7 @@ export class DifyHelmStack extends cdk.Stack {
       values: {
         global: {
           //Specify your host on ALB DNS name
-          host: 'k8s-default-dify-bd3744a9ac-43388940.eu-central-1.elb.amazonaws.com',
+          host: '',
           port: '',
           enableTLS: false,
           image: {
@@ -41,16 +41,16 @@ export class DifyHelmStack extends cdk.Stack {
             { name: 'DB_PASSWORD', value: 'JCuluAdANp1yVS7dErCFbtv0_zD4n1' },  
             { name: 'DB_HOST', value: _RdsStack.cluster.clusterEndpoint.hostname },
             { name: 'DB_PORT', value: _RdsStack.cluster.clusterEndpoint.port.toString() },
-            { name: 'DB_DATABASE', value: 'dify' },
+            { name: 'DB_DATABASE', value: 'dify' },*/
 
             
             //Opensearch
             { name: 'VECTOR_STORE', value: 'opensearch' },
-            { name: 'OPENSEARCH_HOST', value: _AOSStack.openSearchDomain.domainEndpoint },
-            { name: 'OPENSEARCH_PORT', value: '443' },
+            { name: 'OPENSEARCH_HOST', value: 'vpc-dify-aos-dqgsvs3ce6wwzrmsvn3row7e5y.us-east-1.es.amazonaws.com' },
+            { name: 'OPENSEARCH_PORT', value: '443'},
             { name: 'OPENSEARCH_USERNAME', value: 'admin' },
             { name: 'OPENSEARCH_PASSWORD', value: '1qaz@WSX' },
-            //{ name: 'OPENSEARCH_SECURE', value: 'true' },
+            { name: 'OPENSEARCH_SECURE', value: 'true' },
 
             /*
             // Redis Serverless
@@ -79,12 +79,12 @@ export class DifyHelmStack extends cdk.Stack {
             'kubernetes.io/ingress.class': 'alb',
             'alb.ingress.kubernetes.io/scheme': 'internet-facing',
             'alb.ingress.kubernetes.io/target-type': 'ip',
-            'alb.ingress.kubernetes.io/listen-ports': '[{"HTTP": 80}, {"HTTPS": 443}]',
+            'alb.ingress.kubernetes.io/listen-ports': '[{"HTTP": 80}]',
             //'alb.ingress.kubernetes.io/listen-ports': '[{"HTTPS": 443}]',
             //'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:ap-southeast-1:788668107894:certificate/6404aaf8-6051-4637-8d93-d948932b18b6',
           },
           hosts: [{
-            host: 'k8s-default-dify-bd3744a9ac-43388940.eu-central-1.elb.amazonaws.com',
+            host: '',
             paths: [
               { path: '/api', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
               { path: '/v1', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },

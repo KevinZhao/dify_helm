@@ -102,8 +102,6 @@ export class EKSStack extends cdk.Stack {
       description: 'The decoded RDS password from the EKS Kubernetes Secret',
     });*/
 
-
-    /*
     // 创建节点组 IAM 角色
     const nodeGroupRole = new iam.Role(this, 'NodeGroupRole', {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
@@ -114,14 +112,13 @@ export class EKSStack extends cdk.Stack {
       ],
     });
 
-    // 添加节点组
     this.cluster.addNodegroupCapacity('NodeGroup', {
-      instanceTypes: [new ec2.InstanceType(this.node.tryGetContext('NodeInstanceType') || 't3.medium')],
+      instanceTypes: [new ec2.InstanceType(this.node.tryGetContext('NodeInstanceType') || 'm6g.large')],
       minSize: this.node.tryGetContext('NodeGroupMinSize') || 2,
       desiredSize: this.node.tryGetContext('NodeGroupDesiredSize') || 2,
       maxSize: this.node.tryGetContext('NodeGroupMaxSize') || 4,
       nodeRole: nodeGroupRole,
-    });*/
+    });
 
     // 输出 EKS 集群相关信息
     new cdk.CfnOutput(this, 'ClusterName', {

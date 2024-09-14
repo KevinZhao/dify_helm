@@ -22,7 +22,7 @@ export class S3Stack extends cdk.Stack {
     
     // S3 存储桶策略
     // 创建 S3 bucket policy
-    const bucketPolicy = new s3.BucketPolicy(this, 'S3BucketPolicy', {
+    /*const bucketPolicy = new s3.BucketPolicy(this, 'S3BucketPolicy', {
     bucket: this.bucket,});
 
     // 添加策略声明到 bucket policy 文档中
@@ -32,7 +32,7 @@ export class S3Stack extends cdk.Stack {
         resources: [this.bucket.arnForObjects('*')], // 获取桶对象的 ARN
         principals: [new iam.AccountRootPrincipal()], // 使用账户根用户
       })
-    );
+    );*/
 
   }
 }
