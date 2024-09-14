@@ -10,7 +10,7 @@ import { Construct } from 'constructs';
 interface EKSClusterStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
   subnets: ec2.SelectedSubnets;
-  rdsSecretArn: string; // 使用 RDSStack 的输出
+  //rdsSecretArn: string; // 使用 RDSStack 的输出
 }
 
 export class EKSClusterStack extends cdk.Stack {
@@ -49,19 +49,22 @@ export class EKSClusterStack extends cdk.Stack {
       role: eksClusterRole,
       endpointAccess: eks.EndpointAccess.PUBLIC_AND_PRIVATE,
       kubectlLayer: new lambdaLayerKubectl.KubectlV30Layer(this, 'KubectlLayer'), // kubectl Layer
+      authenticationMode: eks.AuthenticationMode.API_AND_CONFIG_MAP,
     });
 
     //This is for debug usage
-    const adminUser = iam.User.fromUserName(this, 'AdminUser', 'admin');
+    //const adminUser = iam.User.fromUserName(this, 'AdminUser', 'admin');
 
     // 将 IAM 用户添加到 system:masters 组
+    /*
     this.cluster.awsAuth.addUserMapping(adminUser, {
       groups: ['system:masters'],
       username: 'admin',
     });
+    */
 
     // 从 Secrets Manager 获取 RDS 密码
-    const rdsSecret = secretsmanager.Secret.fromSecretCompleteArn(this, 'RDSSecret', props.rdsSecretArn);
+    /*const rdsSecret = secretsmanager.Secret.fromSecretCompleteArn(this, 'RDSSecret', props.rdsSecretArn);
     const rdsPassword = rdsSecret.secretValueFromJson('password').unsafeUnwrap();
 
     // 将 RDS 密码存储到 Kubernetes Secret 中
@@ -81,7 +84,7 @@ export class EKSClusterStack extends cdk.Stack {
           },
         },
       ],
-    });
+    });*/
 
     /*
     // 读取 Kubernetes Secret 中的密码
