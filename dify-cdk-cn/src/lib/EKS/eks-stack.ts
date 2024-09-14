@@ -44,6 +44,7 @@ export class EKSClusterStack extends cdk.Stack {
     this.cluster = new eks.Cluster(this, 'DifyEKSCluster', {
       version: eks.KubernetesVersion.V1_30,
       kubectlLayer: new KubectlV30Layer(this, 'KubectlLayer'),
+      authenticationMode: eks.AuthenticationMode.API_AND_CONFIG_MAP,
       vpc: props.vpc,
       vpcSubnets: [{ subnets: props.subnets }],
       defaultCapacity: 2,
@@ -173,6 +174,155 @@ export class EKSClusterStack extends cdk.Stack {
         name: '',
       },
       frontend: this.getFrontendConfig(),
+      api: {
+        replicaCount: 1,
+        image: {
+          repository: 'langgenius/dify-api',
+          pullPolicy: 'IfNotPresent',
+          tag: ''
+        },
+        envs: [
+          { name: 'CODE_MAX_NUMBER', value: '9223372036854775807' },
+          { name: 'CODE_MIN_NUMBER', value: '-9223372036854775808' },
+          { name: 'CODE_MAX_STRING_LENGTH', value: '80000' },
+          { name: 'TEMPLATE_TRANSFORM_MAX_LENGTH', value: '80000' },
+          { name: 'CODE_MAX_STRING_ARRAY_LENGTH', value: '30' },
+          { name: 'CODE_MAX_OBJECT_ARRAY_LENGTH', value: '30' },
+          { name: 'CODE_MAX_NUMBER_ARRAY_LENGTH', value: '1000' }
+        ],
+        podAnnotations: {},
+        podSecurityContext: {},
+        securityContext: {},
+
+        service: {
+          type: 'ClusterIP',
+          port: 80 // api service 监听的端口
+        },
+
+        containerPort: 5001, // API 容器端口
+        resources: {
+          limits: { cpu: '2', memory: '2Gi' },
+          requests: { cpu: '1', memory: '1Gi' }
+        },
+
+        livenessProbe: {
+          httpGet: {
+            path: '/health',
+            port: 'http'
+          },
+          initialDelaySeconds: 360,
+          timeoutSeconds: 10,
+          periodSeconds: 30,
+          successThreshold: 1,
+          failureThreshold: 5
+        },
+        readinessProbe: {
+          httpGet: {
+            path: '/health',
+            port: 'http'
+          },
+          initialDelaySeconds: 120,
+          timeoutSeconds: 10,
+          periodSeconds: 5,
+          successThreshold: 1,
+          failureThreshold: 10
+        }
+      },
+
+      worker: {
+        replicaCount: 1,
+        image: {
+          repository: 'langgenius/dify-api',
+          pullPolicy: 'IfNotPresent',
+          tag: ''
+        },
+        podAnnotations: {},
+        podSecurityContext: {},
+        securityContext: {},
+        resources: {
+          // 设置 worker 资源限制
+        },
+        autoscaling: {
+          enabled: false,
+          minReplicas: 1,
+          maxReplicas: 100,
+          targetCPUUtilizationPercentage: 80
+        },
+        livenessProbe: {
+          // Worker 的存活探针可以根据你的应用程序设置
+        },
+        readinessProbe: {
+          // Worker 的就绪探针可以根据你的应用程序设置
+        }
+      },
+
+      sandbox: {
+        replicaCount: 1,
+        apiKey: 'dify-sandbox', // 请设置自己的 Sandbox API Key
+        apiKeySecret: '', // 可以使用 Secret 管理密钥
+        image: {
+          repository: 'langgenius/dify-sandbox',
+          pullPolicy: 'IfNotPresent',
+          tag: '' // 可以设置为特定的版本
+        },
+        config: {
+          python_requirements: '' // 这里可以添加 Sandbox 环境中需要的 Python 库
+        },
+        envs: [
+          { name: 'GIN_MODE', value: 'release' },
+          { name: 'WORKER_TIMEOUT', value: '15' }
+        ],
+        service: {
+          type: 'ClusterIP',
+          port: 80 // sandbox service 监听的端口
+        },
+        containerPort: 8194, // sandbox 容器端口
+        resources: {
+          // 可以根据需求设置资源请求和限制
+        },
+        readinessProbe: {
+          tcpSocket: {
+            port: 'http'
+          },
+          initialDelaySeconds: 1,
+          timeoutSeconds: 5,
+          periodSeconds: 5,
+          successThreshold: 1,
+          failureThreshold: 10
+        },
+        livenessProbe: {
+          tcpSocket: {
+            port: 'http'
+          },
+          initialDelaySeconds: 30,
+          timeoutSeconds: 5,
+          periodSeconds: 30,
+          successThreshold: 1,
+          failureThreshold: 2
+        }
+      },
+
+      redis: {
+        embedded: true,
+      },
+
+      postgresql: {
+        embedded: true,
+        architecture: 'standalone',
+        auth: {
+          postgresPassword: 'testpassword',
+          database: 'dify',
+        },
+        primary: {
+          persistence: {
+            enabled: false,
+          },
+        },
+      },
+
+      minio: {
+        embedded: true,
+      },
     };
   }
 

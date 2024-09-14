@@ -18,7 +18,7 @@ export class DifyStack extends cdk.Stack {
   private readonly _s3Prefix: string = 'dify';
   private readonly _rdsUserName: string = 'postgres';
   private readonly _rdsDbName: string = 'dify';
-  private readonly _redisClusterName: string = 'dify-redis';
+  private readonly _redisClusterName: string = 'dify-redis-cluster';
   private readonly _redisPrefix: string = 'dify';
   private readonly _openSearchDomainName: string = 'dify-opensearch';
 
@@ -55,13 +55,13 @@ export class DifyStack extends cdk.Stack {
     });
     _RedisStack.addDependency(_VpcStack);
 
-    // // 4. Amazon OpenSearch Service Stack
-    // const _AOSStack = new OpenSearchStack(this, 'OpenSearchStack', {
-    //   privateSubnets: privateSubnets.subnets,
-    //   vpc: _VpcStack.vpc,
-    //   domainName: this._openSearchDomainName,
-    // });
-    // _AOSStack.addDependency(_VpcStack)
+    // 4. Amazon OpenSearch Service Stack
+    const _AOSStack = new OpenSearchStack(this, 'OpenSearchStack', {
+      privateSubnets: privateSubnets.subnets,
+      vpc: _VpcStack.vpc,
+      domainName: this._openSearchDomainName,
+    });
+    _AOSStack.addDependency(_VpcStack)
 
     // // 5. EKS Stack
     // const _eksStack = new EKSClusterStack(this, 'EKSStack', {

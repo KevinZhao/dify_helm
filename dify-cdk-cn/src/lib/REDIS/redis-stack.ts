@@ -30,15 +30,15 @@ export class RedisStack extends cdk.Stack {
     );
 
     // Create a subnet group for the Redis cluster
-    const redisSubnetGroup = new elasticache.CfnSubnetGroup(this, props.prefix + `${props.prefix}-redis-subnet-group`, {
-      description: 'Subnet group for Redis cluster',
+    const redisSubnetGroup = new elasticache.CfnSubnetGroup(this, `${props.prefix}-redis-subnet-group`, {
+      description: 'Dify Subnet group for Redis cluster',
       subnetIds: props.subnets.subnetIds,
     });
 
     // Create a Redis parameter group
-    const redisParameterGroup = new elasticache.CfnParameterGroup(this, props.prefix + `${props.prefix}-redis-parameter-group`, {
+    const redisParameterGroup = new elasticache.CfnParameterGroup(this, `${props.prefix}-redis-parameter-group`, {
       cacheParameterGroupFamily: 'redis7',
-      description: 'Parameter group for Redis 7.x cluster',
+      description: 'Dify Parameter group for Redis 7.x cluster',
       properties: {
         'maxmemory-policy': 'allkeys-lru',
       },
@@ -57,7 +57,7 @@ export class RedisStack extends cdk.Stack {
       securityGroupIds: [redisSecurityGroup.securityGroupId],
       port: 6379,
       engineVersion: '7.0',  // Updated to Redis 7.x
-      replicationGroupId: 'dify-redis-cluster',
+      replicationGroupId: props.redisClusterName,
       cacheParameterGroupName: redisParameterGroup.ref,
     });
 
