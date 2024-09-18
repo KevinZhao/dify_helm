@@ -44,7 +44,9 @@ cdk bootstrap
 ```
 
 3.部署 CDK
+```bash
 cdk deploy --all --concurrency 5 --require-approval never
+```
 请一定使用并行部署，整个部署过程大概 20 分钟左右，如不使用并行，会花费额外时间。
 
 4.部署后配置 helm 环境变量
