@@ -17,8 +17,6 @@ export class ALBCDeploymentStack extends cdk.Stack {
     const policyFilePath = path.join(__dirname, 'iam_policy.json');
     const policyJson = JSON.parse(fs.readFileSync(policyFilePath, 'utf-8'));
 
-    //console.log("IAM Policy JSON:", JSON.stringify(policyJson, null, 2));
-
     // 创建 ALB Load Balancer Controller ServiceAccount
     const albServiceAccount = props.cluster.addServiceAccount('ALBServiceAccount', {
       name: 'aws-load-balancer-controller',

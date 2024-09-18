@@ -6,11 +6,45 @@ import * as eks from 'aws-cdk-lib/aws-eks';
 
 interface DifyHelmStackProps extends cdk.StackProps {
   cluster: eks.Cluster;
+
+  // RDS
+  dbEndpoint: string;
+  dbPort: string;
+
+  // S3
+  s3BucketName: string;
+
+  // Redis
+  redisEndpoint: string;
+  redisPort: string;
+
+  // OpenSearch
+  openSearchEndpoint: string;
 }
 
 export class DifyHelmStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: DifyHelmStackProps) {
     super(scope, id, props);
+
+    const dbPassword = this.node.tryGetContext('dbPassword');
+    if (!dbPassword) {
+      throw new Error("Context variable 'dbPassword' is missing");
+    }
+
+    const opensearchPassword = this.node.tryGetContext('opensearchPassword');
+    if (!opensearchPassword) {
+      throw new Error("Context variable 'opensearchPassword' is missing");
+    }
+
+    const S3AccessKey = this.node.tryGetContext('S3AccessKey');
+    if (!S3AccessKey) {
+      throw new Error("Context variable 'S3AccessKey' is missing");
+    }
+
+    const S3SecretKey = this.node.tryGetContext('S3SecretKey');
+    if (!S3SecretKey) {
+      throw new Error("Context variable 'S3SecretKey' is missing");
+    }
 
     // Here comes dify helm configuration  
     const difyHelm = new eks.HelmChart(this, 'DifyHelmChart', {
@@ -18,7 +52,7 @@ export class DifyHelmStack extends cdk.Stack {
       chart: 'dify',
       repository: 'https://douban.github.io/charts/',
       release: 'dify',
-      namespace: 'default',  // 指定命名空间
+      namespace: 'default',
       values: {
         global: {
           //Specify your host on ALB DNS name
@@ -26,7 +60,7 @@ export class DifyHelmStack extends cdk.Stack {
           port: '',
           enableTLS: false,
           image: {
-            tag: '0.8.0',
+            tag: '0.8.2',
           },
           edition: 'SELF_HOSTED',
           storageType: 's3',
@@ -36,38 +70,41 @@ export class DifyHelmStack extends cdk.Stack {
             { name: 'SECRET_KEY', value: 'd/BV81Qc0hY4BSYzoVPdG9evGco1YBYIxyGBWOrLRFe4nwbKTYGnHQdI'},
             { name: 'LOG_LEVEL', value: 'DEBUG'},
 
-            // RDS
-            /*{ name: 'DB_USERNAME', value: 'postgres' },
-            { name: 'DB_PASSWORD', value: 'JCuluAdANp1yVS7dErCFbtv0_zD4n1' },  
-            { name: 'DB_HOST', value: _RdsStack.cluster.clusterEndpoint.hostname },
-            { name: 'DB_PORT', value: _RdsStack.cluster.clusterEndpoint.port.toString() },
-            { name: 'DB_DATABASE', value: 'dify' },*/
+            // RDS Postgres
+            { name: 'DB_USERNAME', value: 'postgres' },
+            { name: 'DB_PASSWORD', value: dbPassword },  
+            { name: 'DB_HOST', value: props.dbEndpoint },
+            { name: 'DB_PORT', value: props.dbPort },
+            { name: 'DB_DATABASE', value: 'dify' },
 
-            
             //Opensearch
             { name: 'VECTOR_STORE', value: 'opensearch' },
-            { name: 'OPENSEARCH_HOST', value: 'vpc-dify-aos-dqgsvs3ce6wwzrmsvn3row7e5y.us-east-1.es.amazonaws.com' },
+            { name: 'OPENSEARCH_HOST', value: props.openSearchEndpoint },
             { name: 'OPENSEARCH_PORT', value: '443'},
-            { name: 'OPENSEARCH_USERNAME', value: 'admin' },
-            { name: 'OPENSEARCH_PASSWORD', value: '1qaz@WSX' },
+            { name: 'OPENSEARCH_USER', value: 'admin' },
+            { name: 'OPENSEARCH_PASSWORD', value: opensearchPassword },
             { name: 'OPENSEARCH_SECURE', value: 'true' },
 
-            /*
-            // Redis Serverless
-            { name: 'REDIS_HOST', value: _Redis.cluster.attrEndpointAddress },  
-            { name: 'REDIS_PORT', value: _Redis.cluster.attrEndpointPort.toString() },
+            // Redis 
+            { name: 'REDIS_HOST', value: props.redisEndpoint },  
+            { name: 'REDIS_PORT', value: props.redisPort },
             { name: 'REDIS_DB', value: '0' },
+            { name: 'REDIS_USERNAME', value: '' },
+            { name: 'REDIS_PASSWORD', value: '' },
             { name: 'REDIS_USE_SSL', value: 'true' },
-            { name: 'CELERY_BROKER_URL', value: 'redis://' + _Redis.cluster.attrEndpointAddress + ':' + _Redis.cluster.attrEndpointPort.toString() + '/0'},*/
 
+            // CELERY_BROKER
+            { name: 'CELERY_BROKER_URL', value: 'redis://'+':@'+ props.redisEndpoint + ':' + props.redisPort+'/1'},
+
+            { name: 'BROKER_USE_SSL', value: 'true'},
             
             // S3
-            //{ name: 'S3_ENDPOINT', value: 'https://' + _S3Stack.bucket.bucketDomainName },
-            /*{ name: 'S3_ENDPOINT', value: 'https://' + _S3Stack.bucket.bucketName + '.s3.' + this.region + '.' + 'amazonaws.com' },
-            { name: 'S3_BUCKET_NAME', value: _S3Stack.bucket.bucketName },
-            { name: 'S3_ACCESS_KEY', value: '' },
-            { name: 'S3_SECRET_KEY', value: '' },
-            { name: 'S3_Region', value: this.region},*/
+            { name: 'S3_ENDPOINT', value: 'https://dify-788668107894-us-east-1.s3.us-east-1.amazonaws.com' },
+            { name: 'S3_ENDPOINT', value: 'https://' + props.s3BucketName + '.s3.' + this.region + '.amazonaws.com' },
+            { name: 'S3_BUCKET_NAME', value: props.s3BucketName },
+            { name: 'S3_ACCESS_KEY', value: S3AccessKey },
+            { name: 'S3_SECRET_KEY', value: S3SecretKey },
+            { name: 'S3_REGION', value: this.region },
           ],
           labels: []
         },
@@ -86,11 +123,66 @@ export class DifyHelmStack extends cdk.Stack {
           hosts: [{
             host: '',
             paths: [
-              { path: '/api', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
-              { path: '/v1', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
-              { path: '/console/api', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
-              { path: '/files', pathType: 'Prefix', backend: { serviceName: 'dify-api-svc', servicePort: 80 } },
-              { path: '/', pathType: 'Prefix', backend: { serviceName: 'dify-frontend', servicePort: 80 } },
+              {
+                path: '/api',
+                pathType: 'Prefix',
+                backend: {
+                  serviceName: 'dify-api-svc',
+                  servicePort: 80
+                },
+                annotations: {
+                  'alb.ingress.kubernetes.io/healthcheck-path': '/health',
+                  'alb.ingress.kubernetes.io/healthcheck-port': '80'
+                }
+              },
+              {
+                path: '/v1',
+                pathType: 'Prefix',
+                backend: {
+                  serviceName: 'dify-api-svc',
+                  servicePort: 80
+                },
+                annotations: {
+                  'alb.ingress.kubernetes.io/healthcheck-path': '/health',
+                  'alb.ingress.kubernetes.io/healthcheck-port': '80'
+                }
+              },
+              {
+                path: '/console/api',
+                pathType: 'Prefix',
+                backend: {
+                  serviceName: 'dify-api-svc',
+                  servicePort: 80
+                },
+                annotations: {
+                  'alb.ingress.kubernetes.io/healthcheck-path': '/health',
+                  'alb.ingress.kubernetes.io/healthcheck-port': '80'
+                }
+              },
+              {
+                path: '/files',
+                pathType: 'Prefix',
+                backend: {
+                  serviceName: 'dify-api-svc',
+                  servicePort: 80
+                },
+                annotations: {
+                  'alb.ingress.kubernetes.io/healthcheck-path': '/health',
+                  'alb.ingress.kubernetes.io/healthcheck-port': '80'
+                }
+              },
+              {
+                path: '/',
+                pathType: 'Prefix',
+                backend: {
+                  serviceName: 'dify-frontend',
+                  servicePort: 80
+                },
+                annotations: {
+                  'alb.ingress.kubernetes.io/healthcheck-path': '/apps',
+                  'alb.ingress.kubernetes.io/healthcheck-port': '80'
+                }
+              }
             ]
           }]
         },
@@ -108,26 +200,25 @@ export class DifyHelmStack extends cdk.Stack {
           image: {
             repository: 'langgenius/dify-web',
             pullPolicy: 'IfNotPresent',
-            tag: '' // 可以设置为特定的版本，如 "0.7.0"
+            tag: '' 
           },
           envs: [
           ],
-          imagePullSecrets: [], // 如果需要从私有镜像仓库拉取镜像，这里可以设置
+          imagePullSecrets: [], 
           podAnnotations: {},
           podSecurityContext: {
-            // fsGroup: 2000
+
           },
           securityContext: {
-            // runAsNonRoot: true, // 如果需要设置为非 root 用户运行
+            
           },
           service: {
             type: 'ClusterIP',
-            port: 80 // frontend 监听的端口
+            port: 80 
           },
 
-          containerPort: 3000, // 前端容器的端口
+          containerPort: 3000, 
           resources: {
-            // 可以根据需求设置资源请求和限制
             // limits: { cpu: '500m', memory: '512Mi' },
             // requests: { cpu: '200m', memory: '256Mi' }
           },
@@ -187,10 +278,10 @@ export class DifyHelmStack extends cdk.Stack {
 
           service: {
             type: 'ClusterIP',
-            port: 80 // api service 监听的端口
+            port: 80 
           },
 
-          containerPort: 5001, // API 容器端口
+          containerPort: 5001, 
           resources: {
             limits: { cpu: '2', memory: '2Gi' },
             requests: { cpu: '1', memory: '1Gi' }
@@ -231,7 +322,6 @@ export class DifyHelmStack extends cdk.Stack {
           podSecurityContext: {},
           securityContext: {},
           resources: {
-            // 设置 worker 资源限制
           },
           autoscaling: {
             enabled: false,
@@ -240,24 +330,24 @@ export class DifyHelmStack extends cdk.Stack {
             targetCPUUtilizationPercentage: 80
           },
           livenessProbe: {
-            // Worker 的存活探针可以根据你的应用程序设置
+            
           },
           readinessProbe: {
-            // Worker 的就绪探针可以根据你的应用程序设置
+            
           }
         },
 
         sandbox: {
           replicaCount: 1,
-          apiKey: 'dify-sandbox', // 请设置自己的 Sandbox API Key
-          apiKeySecret: '', // 可以使用 Secret 管理密钥
+          apiKey: 'dify-sandbox', 
+          apiKeySecret: '', 
           image: {
             repository: 'langgenius/dify-sandbox',
             pullPolicy: 'IfNotPresent',
-            tag: '' // 可以设置为特定的版本
+            tag: '' 
           },
           config: {
-            python_requirements: '' // 这里可以添加 Sandbox 环境中需要的 Python 库
+            python_requirements: '' 
           },
           envs: [
             { name: 'GIN_MODE', value: 'release' },
@@ -265,11 +355,10 @@ export class DifyHelmStack extends cdk.Stack {
           ],
           service: {
             type: 'ClusterIP',
-            port: 80 // sandbox service 监听的端口
+            port: 80 
           },
-          containerPort: 8194, // sandbox 容器端口
+          containerPort: 8194, 
           resources: {
-            // 可以根据需求设置资源请求和限制
           },
           readinessProbe: {
             tcpSocket: {
@@ -294,25 +383,15 @@ export class DifyHelmStack extends cdk.Stack {
         },
 
         redis: {
-          embedded: true, 
+          embedded: false, 
         },
 
         postgresql:{
-          embedded: true,
-          architecture: 'standalone',
-          auth: {
-            postgresPassword: 'testpassword',
-            database: 'dify',
-          },
-          primary: {
-            persistence: {
-              enabled: false,
-            },
-          },
+          embedded: false,
         },
 
         minio:{
-          embedded: true,
+          embedded: false,
         },
 
       }

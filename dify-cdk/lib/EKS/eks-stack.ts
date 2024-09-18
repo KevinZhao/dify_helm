@@ -31,7 +31,6 @@ export class EKSStack extends cdk.Stack {
       'Allow all traffic from within the VPC'
     );
 
-
     // EKS 集群角色
     const eksClusterRole = new iam.Role(this, 'EKSClusterRole', {
       assumedBy: new iam.ServicePrincipal('eks.amazonaws.com'),
@@ -41,13 +40,15 @@ export class EKSStack extends cdk.Stack {
     // 创建 EKS 集群
     this.cluster = new eks.Cluster(this, 'EKSCluster', {
       version: eks.KubernetesVersion.of(this.node.tryGetContext('EKSClusterVersion') || '1.30'),
-      clusterName: this.node.tryGetContext('EKSClusterName'),
+      clusterName: 'dify-eks', 
       vpc: props.vpc,
       vpcSubnets: [props.subnets],
       securityGroup: eksControlPlaneSecurityGroup,
       role: eksClusterRole,
       endpointAccess: eks.EndpointAccess.PUBLIC_AND_PRIVATE,
-      kubectlLayer: new lambdaLayerKubectl.KubectlV30Layer(this, 'KubectlLayer'), // kubectl Layer
+      defaultCapacity: 0, // 禁用默认节点组
+      kubectlLayer: new lambdaLayerKubectl.KubectlV30Layer(this, 'KubectlLayer'), 
+      authenticationMode: eks.AuthenticationMode.API_AND_CONFIG_MAP,
     });
 
     //This is for debug usage
@@ -62,45 +63,6 @@ export class EKSStack extends cdk.Stack {
     // Deploy ALBC if it doesn't exist
     const _ALBC = new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
       cluster: this.cluster,})
-
-    // 从 Secrets Manager 获取 RDS 密码
-    /*const rdsSecret = secretsmanager.Secret.fromSecretCompleteArn(this, 'RDSSecret', props.rdsSecretArn);
-    const rdsPassword = rdsSecret.secretValueFromJson('password').unsafeUnwrap();
-
-    // 将 RDS 密码存储到 Kubernetes Secret 中
-    new eks.KubernetesManifest(this, 'RdsSecret', {
-      cluster: this.cluster,
-      manifest: [
-        {
-          apiVersion: 'v1',
-          kind: 'Secret',
-          metadata: {
-            name: 'rds-db-secret',
-            namespace: 'default',
-          },
-          type: 'Opaque',
-          data: {
-            rds_password: Buffer.from(rdsPassword).toString('base64'),
-          },
-        },
-      ],
-    });*/
-
-    /*
-    // 读取 Kubernetes Secret 中的密码
-    const secretValue = new eks.KubernetesObjectValue(this, 'ReadRdsSecret', {
-      cluster: this.cluster,
-      objectType: 'secret',
-      objectName: 'rds-db-secret', // Secret 的名称
-      objectNamespace: 'default', // 命名空间
-      jsonPath: '.data.rds_password', // JSON 路径读取密码字段
-    });
-
-    // 解码 Base64 密码并输出到 CloudFormation 控制台
-    new cdk.CfnOutput(this, 'DecodedRdsPassword', {
-      value: Buffer.from(secretValue.value, 'base64').toString('utf-8'),
-      description: 'The decoded RDS password from the EKS Kubernetes Secret',
-    });*/
 
     // 创建节点组 IAM 角色
     const nodeGroupRole = new iam.Role(this, 'NodeGroupRole', {

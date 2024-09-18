@@ -1,3 +1,5 @@
 values_original.yaml
 local_enviroment/values.yaml
 dify-cdk/lib/dify-stack copy.ts
+dify-cdk/lib/dify-helm-stack_us-east-1.ts
+values-us-east-1.yaml

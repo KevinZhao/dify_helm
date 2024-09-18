@@ -5,7 +5,7 @@ import { S3Stack } from '../lib/S3/s3-stack';
 import { VPCStack } from '../lib/VPC/vpc-stack';
 import { RDSStack } from '../lib/RDS/rds-stack';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import { RedisServerlessStack } from '../lib/redis/redis-stack';
+import { RedisClusterStack } from '../lib/redis/redis-stack';
 import { OpenSearchStack } from '../lib/AOS/aos-stack';
 import { EKSStack } from '../lib/EKS/eks-stack';
 
@@ -27,7 +27,7 @@ const rdsStack = new RDSStack(app, 'DifyRDSStack', {
     subnets: privateSubnets 
 }); 
 
-const redisServerlessStack = new RedisServerlessStack(app, 'DifyRedisStack', {
+const redisClusterStack = new RedisClusterStack(app, 'DifyRedisStack', {
     vpc: vpcStack.vpc,
     subnets: privateSubnets
 });
@@ -43,10 +43,36 @@ const eksStack = new EKSStack(app, 'DifyEKSStack', {
     subnets: privateSubnets });
 /*----------------------------------------------------------------------------------------------*/
 
+const dbEndpoint = cdk.Fn.importValue('RDSInstanceEndpoint');
+const dbPort = cdk.Fn.importValue('RDSInstancePort');
+const redisEndpoint = cdk.Fn.importValue('RedisPrimaryEndpoint');
+const redisPort = cdk.Fn.importValue('RedisPort');
+const openSearchEndpoint = cdk.Fn.importValue('OpenSearchDomainEndpoint');
+const s3BucketName = cdk.Fn.importValue('S3BucketName');
+
 // 2. deploy dify helm
 const difyHelmStack = new DifyHelmStack(app, 'DifyStack', {
-    cluster: eksStack.cluster
+    cluster: eksStack.cluster,
+
+    // RDS
+    dbEndpoint: dbEndpoint,
+    dbPort: dbPort,
+
+    // S3
+    s3BucketName: s3BucketName,
+
+    // Redis
+    redisEndpoint: redisEndpoint,
+    redisPort: redisPort,
+
+    // OpenSearch
+    openSearchEndpoint: openSearchEndpoint,
+
 });
 
 // 设置 difyHelmStack 依赖于 eksStack
 difyHelmStack.addDependency(eksStack);
+difyHelmStack.addDependency(rdsStack);
+difyHelmStack.addDependency(redisClusterStack);
+difyHelmStack.addDependency(s3Stack);
+difyHelmStack.addDependency(openSearchStack);

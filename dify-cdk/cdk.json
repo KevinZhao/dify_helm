@@ -17,6 +17,10 @@
     ]
   },
   "context": {
+    "dbPassword": "Place.Your.Password",
+    "opensearchPassword": "Place.Your.Password",
+    "S3AccessKey": "your.S3.accesskey",
+    "S3SecretKey": "your.S3.secretkey",
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": [
@@ -70,3 +74,5 @@
     "@aws-cdk/aws-s3:keepNotificationInImportedBucket": false
   }
 }
+
+
