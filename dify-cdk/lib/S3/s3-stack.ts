@@ -4,36 +4,32 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
 
 export class S3Stack extends cdk.Stack {
-  public readonly bucket: s3.Bucket; // 公共属性
+  public readonly bucket: s3.Bucket; 
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // S3 存储桶
+    // 创建 S3 存储桶
     this.bucket = new s3.Bucket(this, 'S3Bucket', {
       bucketName: `dify-${this.account}-${this.region}`,
-      removalPolicy: cdk.RemovalPolicy.RETAIN, // 保留 S3 Bucket，即使堆栈删除
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
       versioned: true,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
     });
 
-    
-    // S3 存储桶策略
-    // 创建 S3 bucket policy
-    const bucketPolicy = new s3.BucketPolicy(this, 'S3BucketPolicy', {
-    bucket: this.bucket,});
+    // 使用 addToResourcePolicy 添加策略
+    this.bucket.addToResourcePolicy(new iam.PolicyStatement({
+      actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
+      resources: [this.bucket.arnForObjects('*')],
+      principals: [new iam.AccountRootPrincipal()],
+    }));
 
-    // 添加策略声明到 bucket policy 文档中
-    bucketPolicy.document.addStatements(
-      new iam.PolicyStatement({
-        actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
-        resources: [this.bucket.arnForObjects('*')], // 获取桶对象的 ARN
-        principals: [new iam.AccountRootPrincipal()], // 使用账户根用户
-      })
-    );
-
+    new cdk.CfnOutput(this, 'BucketName', {
+      value: this.bucket.bucketName,
+      description: 'S3 Bucket Name',
+      exportName: 'S3BucketName',
+    });
   }
 }
-

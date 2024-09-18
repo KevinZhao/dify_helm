@@ -9,11 +9,18 @@ interface RDSStackProps extends cdk.StackProps {
 }
 
 export class RDSStack extends cdk.Stack {
-  public readonly secretArn: string;
   public readonly cluster: rds.DatabaseCluster;
+  public readonly dbEndpoint: string;
+  public readonly dbPort: string;
 
   constructor(scope: Construct, id: string, props: RDSStackProps) {
     super(scope, id, props);
+
+    // Retrieve the password from context
+    const dbPassword = this.node.tryGetContext('dbPassword');
+    if (!dbPassword) {
+      throw new Error("Context variable 'dbPassword' is missing");
+    }
 
     const dbSecurityGroup = new ec2.SecurityGroup(this, 'DBSecurityGroup', {
       vpc: props.vpc,
@@ -33,7 +40,7 @@ export class RDSStack extends cdk.Stack {
       }),
       vpc: props.vpc,
       vpcSubnets: props.subnets,
-      credentials: rds.Credentials.fromGeneratedSecret('postgres'), // 自动生成密码
+      credentials: rds.Credentials.fromPassword('postgres', cdk.SecretValue.unsafePlainText(dbPassword)),
       clusterIdentifier: 'dify-db',
       defaultDatabaseName: 'dify',
       serverlessV2MaxCapacity: 8,
@@ -42,13 +49,21 @@ export class RDSStack extends cdk.Stack {
       writer: rds.ClusterInstance.serverlessV2('writer'),
     });
 
-    // 输出 Secrets Manager 中的 Secret ARN
-    this.secretArn = this.cluster.secret?.secretArn ?? '';
+    // Output database information
+    this.dbEndpoint = this.cluster.clusterEndpoint.hostname;
+    this.dbPort = this.cluster.clusterEndpoint.port.toString();
 
-    new cdk.CfnOutput(this, 'RDSSecretArn', {
-      value: this.secretArn,
-      description: 'The ARN of the RDS Secret',
+    new cdk.CfnOutput(this, 'DBEndpoint', {
+      value: this.dbEndpoint,
+      description: 'RDS Endpoint',
+      exportName: 'RDSInstanceEndpoint',
     });
-    
+
+    new cdk.CfnOutput(this, 'DBPort', {
+      value: this.dbPort,
+      description: 'RDS Port',
+      exportName: 'RDSInstancePort',
+    });
+
   }
 }
