@@ -46,5 +46,23 @@ export class RedisServerlessStack extends cdk.Stack {
       description: 'Dify Redis Serverless Cache',
     });
 
+    new cdk.CfnOutput(this, 'RedisPrimaryEndpoint', {
+      value: this.dify_cluster.attrEndpointAddress,
+      description: 'Primary endpoint for the Redis replication group',
+      exportName: 'RedisPrimaryEndpoint',
+    });
+
+    new cdk.CfnOutput(this, 'CeleryBrokerRedisPrimaryEndpoint', {
+      value: this.celery_broker_cluster.attrEndpointAddress,
+      description: 'Primary endpoint for the Redis replication group',
+      exportName: 'CeleryBrokerRedisPrimaryEndpoint',
+    });
+
+    new cdk.CfnOutput(this, 'RedisPort', {
+      value: this.dify_cluster.attrEndpointPort,
+      description: 'Redis Port',
+      exportName: 'RedisPort',
+    });
+
   }
 }
