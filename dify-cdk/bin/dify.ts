@@ -6,7 +6,6 @@ import { VPCStack } from '../lib/VPC/vpc-stack';
 import { RDSStack } from '../lib/RDS/rds-stack';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { RedisClusterStack } from '../lib/redis/redis-stack';
-import { RedisServerlessStack } from '../lib/redis/redis-stack-serverless';
 import { OpenSearchStack } from '../lib/AOS/aos-stack';
 import { EKSStack } from '../lib/EKS/eks-stack';
 
@@ -28,16 +27,12 @@ const rdsStack = new RDSStack(app, 'DifyRDSStack', {
     subnets: privateSubnets 
 }); 
 
-/*
+
 const redisClusterStack = new RedisClusterStack(app, 'DifyRedisStack', {
     vpc: vpcStack.vpc,
     subnets: privateSubnets
-});*/
-
-const redisServerlessStack = new RedisServerlessStack(app, 'DifyRedisStack', {
-    vpc: vpcStack.vpc,
-    subnets: privateSubnets
 });
+
     
 const openSearchStack = new OpenSearchStack(app, 'DifyOpenSearchStack', {
     vpc: vpcStack.vpc,
@@ -53,7 +48,6 @@ const eksStack = new EKSStack(app, 'DifyEKSStack', {
 const dbEndpoint = cdk.Fn.importValue('RDSInstanceEndpoint');
 const dbPort = cdk.Fn.importValue('RDSInstancePort');
 const redisEndpoint = cdk.Fn.importValue('RedisPrimaryEndpoint');
-const redisCeleryBrokerEndpoint = cdk.Fn.importValue('CeleryBrokerRedisPrimaryEndpoint');
 const redisPort = cdk.Fn.importValue('RedisPort');
 const openSearchEndpoint = cdk.Fn.importValue('OpenSearchDomainEndpoint');
 const s3BucketName = cdk.Fn.importValue('S3BucketName');
@@ -71,7 +65,6 @@ const difyHelmStack = new DifyHelmStack(app, 'DifyStack', {
 
     // Redis
     redisEndpoint: redisEndpoint,
-    redisCeleryBrokerEndpoint: redisCeleryBrokerEndpoint,
     redisPort: redisPort,
 
     // OpenSearch
@@ -82,6 +75,6 @@ const difyHelmStack = new DifyHelmStack(app, 'DifyStack', {
 // 设置 difyHelmStack 依赖于 eksStack
 difyHelmStack.addDependency(eksStack);
 difyHelmStack.addDependency(rdsStack);
-difyHelmStack.addDependency(redisServerlessStack);
+difyHelmStack.addDependency(redisClusterStack);
 difyHelmStack.addDependency(s3Stack);
 difyHelmStack.addDependency(openSearchStack);
