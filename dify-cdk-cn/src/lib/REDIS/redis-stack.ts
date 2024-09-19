@@ -62,17 +62,16 @@ export class RedisStack extends cdk.Stack {
     });
 
     // Output the Redis cluster endpoint
-    new cdk.CfnOutput(this, 'RedisClusterEndpoint', {
+    new cdk.CfnOutput(this, 'RedisPrimaryEndpoint', {
       value: this.redisCluster.attrPrimaryEndPointAddress,
-      description: 'Redis Cluster Endpoint',
-      exportName: 'RedisClusterEndpoint',
+      description: 'Primary endpoint for the Redis replication group',
+      exportName: 'RedisPrimaryEndpoint',
     });
 
-    // Output the Redis cluster port
-    new cdk.CfnOutput(this, 'RedisClusterPort', {
+    new cdk.CfnOutput(this, 'RedisPort', {
       value: this.redisCluster.attrPrimaryEndPointPort,
-      description: 'Redis Cluster Port',
-      exportName: 'RedisClusterPort',
+      description: 'Redis Port',
+      exportName: 'RedisPort',
     });
   }
 }

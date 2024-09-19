@@ -18,6 +18,12 @@ export class OpenSearchStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: OpenSearchStackProps) {
     super(scope, id, props);
 
+    // Retrieve the password from context
+    const masterUserPassword = this.node.tryGetContext('opensearchPassword');
+    if (!masterUserPassword) {
+      throw new Error("Context variable 'opensearchPassword' is missing");
+    }
+
     // Check if the service-linked role exists
     const checkServiceLinkedRole = new cr.AwsCustomResource(this, 'CheckServiceLinkedRole', {
       onCreate: {
@@ -74,7 +80,14 @@ export class OpenSearchStack extends cdk.Stack {
     openSearchSecurityGroup.addIngressRule(
       ec2.Peer.ipv4(props.vpc.vpcCidrBlock),
       ec2.Port.tcp(443),
-      'Allow database connections from within the VPC'
+      'Allow HTTPS connections from within the VPC'
+    );
+
+    // 添加对 9200 端口的入站规则
+    openSearchSecurityGroup.addIngressRule(
+      ec2.Peer.ipv4(props.vpc.vpcCidrBlock),
+      ec2.Port.tcp(9200),
+      'Allow HTTP connections on port 9200 from within the VPC'
     );
 
     this.openSearchDomain = new opensearch.Domain(this, 'Domain', {
@@ -101,7 +114,8 @@ export class OpenSearchStack extends cdk.Stack {
         enabled: true,
       },
       fineGrainedAccessControl: {
-        masterUserArn: openSearchMasterUserRole.roleArn,
+        masterUserName: 'admin',
+        masterUserPassword: cdk.SecretValue.unsafePlainText(masterUserPassword),
       },
       vpc: props.vpc,
       vpcSubnets: [{ subnets: props.privateSubnets }],
@@ -123,13 +137,7 @@ export class OpenSearchStack extends cdk.Stack {
     // Ensure the OpenSearch domain is created after checking for the service-linked role
     this.openSearchDomain.node.addDependency(checkServiceLinkedRole);
 
-    // Output the role ARN for reference
-    new cdk.CfnOutput(this, 'OpenSearchMasterUserRoleArn', {
-      value: openSearchMasterUserRole.roleArn,
-      description: 'ARN of the IAM role for OpenSearch master user',
-      exportName: 'OpenSearchMasterUserRoleArn',
-    });
-
+    // Outputs
     new cdk.CfnOutput(this, 'OpenSearchDomainEndpoint', {
       value: this.openSearchDomain.domainEndpoint,
       description: 'OpenSearch Domain Endpoint',

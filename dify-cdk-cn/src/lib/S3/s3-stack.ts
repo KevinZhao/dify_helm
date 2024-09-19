@@ -23,20 +23,18 @@ export class S3Stack extends cdk.Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
     });
 
-    // S3 存储桶策略
-    // 创建 S3 bucket policy
-    const bucketPolicy = new s3.BucketPolicy(this, 'S3BucketPolicy', {
-      bucket: this.bucket,
-    });
+    // 使用 addToResourcePolicy 添加策略
+    this.bucket.addToResourcePolicy(new iam.PolicyStatement({
+      actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
+      resources: [this.bucket.arnForObjects('*')],
+      principals: [new iam.AccountRootPrincipal()],
+    }));
 
-    // 添加策略声明到 bucket policy 文档中
-    bucketPolicy.document.addStatements(
-      new iam.PolicyStatement({
-        actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
-        resources: [this.bucket.arnForObjects('*')], // 获取桶对象的 ARN
-        principals: [new iam.AccountRootPrincipal()], // 使用账户根用户
-      })
-    );
+    new cdk.CfnOutput(this, 'BucketName', {
+      value: this.bucket.bucketName,
+      description: 'S3 Bucket Name',
+      exportName: 'S3BucketName',
+    });
   }
 }
 

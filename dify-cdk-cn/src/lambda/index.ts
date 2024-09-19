@@ -1,23 +1,23 @@
-// src/lambda/getOpenSearchSecret.ts
 import { SecretsManager } from '@aws-sdk/client-secrets-manager';
 
 const secretsManager = new SecretsManager();
 
 export const handler = async (event: any) => {
-    const secretName = process.env.OPENSEARCH_SECRET_NAME;
+    const rdsSecretName = process.env.RDS_SECRET_NAME;
 
-    if (!secretName) {
-        throw new Error('OPENSEARCH_SECRET_NAME environment variable is not set');
+    if (!rdsSecretName) {
+        throw new Error('RDS_SECRET_NAME environment variable is not set');
     }
 
     try {
-        const data = await secretsManager.getSecretValue({ SecretId: secretName });
+        const data = await secretsManager.getSecretValue({ SecretId: rdsSecretName });
 
         if (data.SecretString) {
             const secret = JSON.parse(data.SecretString);
             return {
                 statusCode: 200,
                 body: JSON.stringify({
+                    host: secret.host,
                     username: secret.username,
                     password: secret.password,
                 }),

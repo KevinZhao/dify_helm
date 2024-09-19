@@ -17,6 +17,10 @@
     ]
   },
   "context": {
+    "dbPassword": "Your.dbPassword",
+    "opensearchPassword": "Your.aosPassword",
+    "S3AccessKey": "Your.S3.AccessKey",
+    "S3SecretKey": "Your.S3.SecretKey",
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": [

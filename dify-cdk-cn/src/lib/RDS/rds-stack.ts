@@ -17,6 +17,12 @@ export class RDSStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: RDSStackProps) {
     super(scope, id, props);
 
+    // Retrieve the password from context
+    const dbPassword = this.node.tryGetContext('dbPassword');
+    if (!dbPassword) {
+      throw new Error("Context variable 'dbPassword' is missing");
+    }
+
     const dbSecurityGroup = new ec2.SecurityGroup(this, 'DBSecurityGroup', {
       vpc: props.vpc,
       description: 'Security group for RDS database',
@@ -37,7 +43,7 @@ export class RDSStack extends cdk.Stack {
       ],
       vpc: props.vpc,
       vpcSubnets: props.subnets,
-      credentials: rds.Credentials.fromGeneratedSecret(props.userName),
+      credentials: rds.Credentials.fromPassword('postgres', cdk.SecretValue.unsafePlainText(dbPassword)),
       clusterIdentifier: props.dbName + '-db',
       defaultDatabaseName: props.dbName,
       securityGroups: [dbSecurityGroup],
@@ -53,19 +59,16 @@ export class RDSStack extends cdk.Stack {
       'Allow database connections from within the VPC'
     );
 
-    new cdk.CfnOutput(this, 'RDSSecretArn', {
-      value: this.cluster.secret!.secretArn,
-      exportName: 'RDSSecretArn',
-    });
-
-    new cdk.CfnOutput(this, 'RDSClusterEndpointHostname', {
+    new cdk.CfnOutput(this, 'DBEndpoint', {
       value: this.cluster.clusterEndpoint.hostname,
-      exportName: 'RDSClusterEndpointHostname'
+      description: 'RDS Endpoint',
+      exportName: 'RDSInstanceEndpoint',
     });
 
-    new cdk.CfnOutput(this, 'RDSClusterEndpointPort', {
+    new cdk.CfnOutput(this, 'DBPort', {
       value: this.cluster.clusterEndpoint.port.toString(),
-      exportName: 'RDSClusterEndpointPort'
-    });
+      description: 'RDS Port',
+      exportName: 'RDSInstancePort',
+    })
   }
 }
