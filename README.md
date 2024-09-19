@@ -93,7 +93,7 @@ kubectl get pod
 
 kubectl exec -it dify-api-5b76699958-mt868 -- flask db upgrade
 
-执行后，将可以进行管理员注册。
+执行后，可以使用 http://ALBDNSName的方式访问 dify，并进行进行管理员注册。
 
 Finally
 Happy dify with AWS
