@@ -1,5 +1,5 @@
 {
-  "app": "npx ts-node --prefer-ts-exts bin/hello-cdk.ts",
+  "app": "npx ts-node --prefer-ts-exts bin/dify.ts",
   "watch": {
     "include": [
       "**"
@@ -17,6 +17,10 @@
     ]
   },
   "context": {
+    "dbPassword": "Your.dbPassword.0910",
+    "opensearchPassword": "Your.aosPassword.0910",
+    "S3AccessKey": "Your.S3.AccessKey",
+    "S3SecretKey": "Your.S3.SecretKey",
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": [
@@ -70,3 +74,5 @@
     "@aws-cdk/aws-s3:keepNotificationInImportedBucket": false
   }
 }
+
+
