@@ -19,9 +19,9 @@ const rdsDbName: string = 'dify';
 const redisClusterName: string = 'dify-redis-cluster';
 const redisPrefix: string = 'dify';
 const openSearchDomainName: string = 'dify-opensearch';
-const eksClusterName: string = 'dify-eks-cluster';
+const eksClusterName: string = 'dify-eks';
 
-// Deployment of Managed Services
+// Phase 1
 // 0. VPC Stack
 const vpcStack = new VPCStack(app, 'VPCStack', {
     vpcName: vpcName,
@@ -77,7 +77,8 @@ const openSearchEndpoint = cdk.Fn.importValue('OpenSearchDomainEndpoint');
 const s3BucketName = cdk.Fn.importValue('S3BucketName');
 
 
-// 2. deploy dify helm
+// Phase 2
+// Deploy Dify Helm Chart
 const difyHelmStack = new DifyHelmStack(app, 'DifyStack', {
     cluster: eksStack.cluster,
 
@@ -97,11 +98,8 @@ const difyHelmStack = new DifyHelmStack(app, 'DifyStack', {
     openSearchEndpoint: openSearchEndpoint,
 
 });
-
-// 设置 difyHelmStack 依赖于 eksStack
 difyHelmStack.addDependency(eksStack);
 difyHelmStack.addDependency(rdsStack);
 difyHelmStack.addDependency(redisStack);
 difyHelmStack.addDependency(s3Stack);
 difyHelmStack.addDependency(opensearchStack);
-

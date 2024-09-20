@@ -38,7 +38,8 @@
                 "elasticloadbalancing:DescribeTargetGroups",
                 "elasticloadbalancing:DescribeTargetGroupAttributes",
                 "elasticloadbalancing:DescribeTargetHealth",
-                "elasticloadbalancing:DescribeTags"
+                "elasticloadbalancing:DescribeTags",
+                "elasticloadbalancing:DescribeTrustStores"
             ],
             "Resource": "*"
         },
@@ -85,7 +86,7 @@
             "Action": [
                 "ec2:CreateTags"
             ],
-            "Resource": "arn:aws-cn:ec2:*:*:security-group/*",
+            "Resource": "*",
             "Condition": {
                 "StringEquals": {
                     "ec2:CreateAction": "CreateSecurityGroup"
@@ -101,7 +102,7 @@
                 "ec2:CreateTags",
                 "ec2:DeleteTags"
             ],
-            "Resource": "arn:aws-cn:ec2:*:*:security-group/*",
+            "Resource": "*",
             "Condition": {
                 "Null": {
                     "aws:RequestTag/elbv2.k8s.aws/cluster": "true",
@@ -224,7 +225,7 @@
                 "elasticloadbalancing:RegisterTargets",
                 "elasticloadbalancing:DeregisterTargets"
             ],
-            "Resource": "arn:aws-cn:elasticloadbalancing:*:*:targetgroup/*/*"
+            "Resource": "*"
         },
         {
             "Effect": "Allow",

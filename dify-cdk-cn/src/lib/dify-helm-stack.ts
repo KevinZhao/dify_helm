@@ -57,8 +57,8 @@ export class DifyHelmStack extends cdk.Stack {
             values: {
                 global: {
                     //Specify your host on ALB DNS name
-                    host: '',
-                    port: '',
+                    host: 'k8s-default-dify-324ef51b8a-1404288550.cn-northwest-1.elb.amazonaws.com.cn',
+                    port: '80',
                     enableTLS: false,
                     image: {
                         tag: '0.8.2',
@@ -100,7 +100,7 @@ export class DifyHelmStack extends cdk.Stack {
                         { name: 'BROKER_USE_SSL', value: 'true' },
 
                         // S3
-                        { name: 'S3_ENDPOINT', value: 'https://' + props.s3BucketName + '.s3.' + this.region + '.amazonaws.com' },
+                        { name: 'S3_ENDPOINT', value: 'https://' + props.s3BucketName + '.s3.' + this.region + '.amazonaws.com.cn' },
                         { name: 'S3_BUCKET_NAME', value: props.s3BucketName },
                         { name: 'S3_ACCESS_KEY', value: S3AccessKey },
                         { name: 'S3_SECRET_KEY', value: S3SecretKey },
@@ -121,7 +121,7 @@ export class DifyHelmStack extends cdk.Stack {
                         //'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:ap-southeast-1:788668107894:certificate/6404aaf8-6051-4637-8d93-d948932b18b6',
                     },
                     hosts: [{
-                        host: '',
+                        host: 'k8s-default-dify-324ef51b8a-1404288550.cn-northwest-1.elb.amazonaws.com.cn',
                         paths: [
                             {
                                 path: '/api',
@@ -198,7 +198,7 @@ export class DifyHelmStack extends cdk.Stack {
                     replicaCount: 1,
 
                     image: {
-                        repository: 'langgenius/dify-web',
+                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-web',
                         pullPolicy: 'IfNotPresent',
                         tag: ''
                     },
@@ -259,7 +259,7 @@ export class DifyHelmStack extends cdk.Stack {
                 api: {
                     replicaCount: 1,
                     image: {
-                        repository: 'langgenius/dify-api',
+                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-api',
                         pullPolicy: 'IfNotPresent',
                         tag: ''
                     },
@@ -314,7 +314,7 @@ export class DifyHelmStack extends cdk.Stack {
                 worker: {
                     replicaCount: 1,
                     image: {
-                        repository: 'langgenius/dify-api',
+                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-api',
                         pullPolicy: 'IfNotPresent',
                         tag: ''
                     },
@@ -342,9 +342,9 @@ export class DifyHelmStack extends cdk.Stack {
                     apiKey: 'dify-sandbox',
                     apiKeySecret: '',
                     image: {
-                        repository: 'langgenius/dify-sandbox',
+                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-sandbox',
                         pullPolicy: 'IfNotPresent',
-                        tag: ''
+                        tag: 'latest'
                     },
                     config: {
                         python_requirements: ''

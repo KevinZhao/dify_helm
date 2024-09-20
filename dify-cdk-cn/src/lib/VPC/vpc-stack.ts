@@ -14,6 +14,7 @@ export class VPCStack extends cdk.Stack {
 
       // Create a VPC
       const vpc = new ec2.Vpc(this, props.vpcName, {
+          //vpcName: props.vpcName,
           maxAzs: 2, 
           natGateways: 1,
           subnetConfiguration: [
