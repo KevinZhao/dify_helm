@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
-import { DifyHelmStack } from '../lib/dify-helm-stack';
+import { DifyHelmStack } from './dify-helm-stack';
 import { S3Stack } from '../lib/S3/s3-stack';
 import { VPCStack } from '../lib/VPC/vpc-stack';
 import { RDSStack } from '../lib/RDS/rds-stack';

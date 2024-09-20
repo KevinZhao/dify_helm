@@ -1,7 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-
-// Local definition
 import * as eks from 'aws-cdk-lib/aws-eks';
 
 interface DifyHelmStackProps extends cdk.StackProps {
@@ -95,11 +93,9 @@ export class DifyHelmStack extends cdk.Stack {
 
             // CELERY_BROKER
             { name: 'CELERY_BROKER_URL', value: 'redis://'+':@'+ props.redisEndpoint + ':' + props.redisPort+'/1'},
-
             { name: 'BROKER_USE_SSL', value: 'true'},
             
             // S3
-            { name: 'S3_ENDPOINT', value: 'https://dify-788668107894-us-east-1.s3.us-east-1.amazonaws.com' },
             { name: 'S3_ENDPOINT', value: 'https://' + props.s3BucketName + '.s3.' + this.region + '.amazonaws.com' },
             { name: 'S3_BUCKET_NAME', value: props.s3BucketName },
             { name: 'S3_ACCESS_KEY', value: S3AccessKey },
@@ -393,9 +389,8 @@ export class DifyHelmStack extends cdk.Stack {
         minio:{
           embedded: false,
         },
-
       }
     });
-  
+
   }
 }
