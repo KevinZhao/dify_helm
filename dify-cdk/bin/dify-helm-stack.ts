@@ -191,7 +191,7 @@ export class DifyHelmStack extends cdk.Stack {
         },
 
         frontend: {
-          replicaCount: 1,
+          replicaCount: 2,
 
           image: {
             repository: 'langgenius/dify-web',
@@ -253,7 +253,7 @@ export class DifyHelmStack extends cdk.Stack {
         },
 
         api: {
-          replicaCount: 1,
+          replicaCount: 2,
           image: {
             repository: 'langgenius/dify-api',
             pullPolicy: 'IfNotPresent',
@@ -308,7 +308,7 @@ export class DifyHelmStack extends cdk.Stack {
         },
 
         worker: {
-          replicaCount: 1,
+          replicaCount: 2,
           image: {
             repository: 'langgenius/dify-api',
             pullPolicy: 'IfNotPresent',
@@ -334,7 +334,7 @@ export class DifyHelmStack extends cdk.Stack {
         },
 
         sandbox: {
-          replicaCount: 1,
+          replicaCount: 2,
           apiKey: 'dify-sandbox', 
           apiKeySecret: '', 
           image: {
