@@ -9,7 +9,6 @@ import { Construct } from 'constructs';
 interface EKSClusterStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
   subnets: ec2.SelectedSubnets;
-  //rdsSecretArn: string; // 使用 RDSStack 的输出
 }
 
 export class EKSStack extends cdk.Stack {
@@ -49,15 +48,6 @@ export class EKSStack extends cdk.Stack {
       defaultCapacity: 0, // 禁用默认节点组
       kubectlLayer: new lambdaLayerKubectl.KubectlV30Layer(this, 'KubectlLayer'), 
       authenticationMode: eks.AuthenticationMode.API_AND_CONFIG_MAP,
-    });
-
-    //This is for debug usage
-    const adminUser = iam.User.fromUserName(this, 'AdminUser', 'admin');
-
-    // 将 IAM 用户添加到 system:masters 组
-    this.cluster.awsAuth.addUserMapping(adminUser, {
-      groups: ['system:masters'],
-      username: 'admin',
     });
 
     // Deploy ALBC if it doesn't exist

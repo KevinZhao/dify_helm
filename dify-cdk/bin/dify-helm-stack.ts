@@ -50,7 +50,7 @@ export class DifyHelmStack extends cdk.Stack {
       chart: 'dify',
       repository: 'https://douban.github.io/charts/',
       release: 'dify',
-      namespace: 'default',
+      namespace: 'dify',
       values: {
         global: {
           //Specify your host on ALB DNS name

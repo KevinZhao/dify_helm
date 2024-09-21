@@ -54,7 +54,7 @@ export class ALBCDeploymentStack extends cdk.Stack {
     policyJson.Statement.forEach((statement: any) => {
       policy.addStatements(new iam.PolicyStatement({
         actions: statement.Action,
-        resources: statement.Resource || ['*'],  // 处理资源字段
+        resources: statement.Resource || ['*'], 
       }));
     });
   }
