@@ -50,10 +50,6 @@ export class EKSStack extends cdk.Stack {
       authenticationMode: eks.AuthenticationMode.API_AND_CONFIG_MAP,
     });
 
-    // Deploy ALBC if it doesn't exist
-    const _ALBC = new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
-      cluster: this.cluster,})
-
     // 创建节点组 IAM 角色
     const nodeGroupRole = new iam.Role(this, 'NodeGroupRole', {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
@@ -71,6 +67,10 @@ export class EKSStack extends cdk.Stack {
       maxSize: this.node.tryGetContext('NodeGroupMaxSize') || 4,
       nodeRole: nodeGroupRole,
     });
+
+    // Deploy ALBC if it doesn't exist
+    const _ALBC = new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
+      cluster: this.cluster,})
 
     // 输出 EKS 集群相关信息
     new cdk.CfnOutput(this, 'ClusterName', {

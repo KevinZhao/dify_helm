@@ -46,7 +46,9 @@ export class RDSStack extends cdk.Stack {
       serverlessV2MaxCapacity: 8,
       serverlessV2MinCapacity: 0.5,
       securityGroups: [dbSecurityGroup],
-      writer: rds.ClusterInstance.serverlessV2('writer'),
+      writer: rds.ClusterInstance.serverlessV2('writer', {
+        instanceIdentifier: 'dify-db-writer',
+      }),
     });
 
     // Output database information
