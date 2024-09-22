@@ -60,6 +60,13 @@ export class EKSStack extends cdk.Stack {
       ],
     });
 
+    const invokeSagemakerPolicy = new iam.PolicyStatement({
+      actions: ['sagemaker:InvokeEndpoint'],
+      resources: ['*'], 
+    });
+    
+    nodeGroupRole.addToPolicy(invokeSagemakerPolicy);
+
     this.cluster.addNodegroupCapacity('NodeGroup', {
       instanceTypes: [new ec2.InstanceType(this.node.tryGetContext('NodeInstanceType') || 'm6g.large')],
       minSize: this.node.tryGetContext('NodeGroupMinSize') || 2,
