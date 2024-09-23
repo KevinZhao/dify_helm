@@ -16,6 +16,7 @@ interface EKSClusterStackProps extends cdk.StackProps {
 
 export class EKSStack extends cdk.Stack {
   public readonly cluster: eks.Cluster;
+  public readonly helmDeployRole: iam.Role;
 
   constructor(scope: Construct, id: string, props: EKSClusterStackProps) {
     super(scope, id, props);
@@ -53,14 +54,14 @@ export class EKSStack extends cdk.Stack {
       authenticationMode: eks.AuthenticationMode.API_AND_CONFIG_MAP,
     });
 
-    //This is for debug usage
-    const adminUser = iam.User.fromUserName(this, 'AdminUser', 'chynwa_cn_dev');
+    // //This is for debug usage
+    // const adminUser = iam.User.fromUserName(this, 'AdminUser', 'chynwa_cn_dev');
 
-    // 将 IAM 用户添加到 system:masters 组
-    this.cluster.awsAuth.addUserMapping(adminUser, {
-      groups: ['system:masters'],
-      username: 'chynwa_cn_dev',
-    });
+    // // 将 IAM 用户添加到 system:masters 组
+    // this.cluster.awsAuth.addUserMapping(adminUser, {
+    //   groups: ['system:masters'],
+    //   username: 'chynwa_cn_dev',
+    // });
 
     // 创建节点组 IAM 角色
     const nodeGroupRole = new iam.Role(this, 'NodeGroupRole', {
@@ -72,8 +73,15 @@ export class EKSStack extends cdk.Stack {
       ],
     });
 
+    const invokeSagemakerPolicy = new iam.PolicyStatement({
+      actions: ['sagemaker:InvokeEndpoint'],
+      resources: ['*'],
+    });
+
+    nodeGroupRole.addToPolicy(invokeSagemakerPolicy);
+
     this.cluster.addNodegroupCapacity('NodeGroup', {
-      instanceTypes: [new ec2.InstanceType(this.node.tryGetContext('NodeInstanceType') || 'm5a.large')],
+      instanceTypes: [new ec2.InstanceType(this.node.tryGetContext('NodeInstanceType') || 'm5a.large')], // change to different architecture accordingly
       minSize: this.node.tryGetContext('NodeGroupMinSize') || 2,
       desiredSize: this.node.tryGetContext('NodeGroupDesiredSize') || 2,
       maxSize: this.node.tryGetContext('NodeGroupMaxSize') || 4,
@@ -105,13 +113,13 @@ export class EKSStack extends cdk.Stack {
     });
 
     // Create a new IAM role for Helm chart deployment
-    const helmDeployRole = new iam.Role(this, 'HelmDeployRole', {
+    this.helmDeployRole = new iam.Role(this, 'HelmDeployRole', {
       assumedBy: new iam.ServicePrincipal('eks.amazonaws.com'),
       roleName: 'EKSHelmDeployRole'
     });
 
     // Add a condition to the trust relationship
-    helmDeployRole.assumeRolePolicy?.addStatements(
+    this.helmDeployRole.assumeRolePolicy?.addStatements(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         principals: [new iam.ServicePrincipal('eks.amazonaws.com')],
@@ -125,18 +133,18 @@ export class EKSStack extends cdk.Stack {
     );
 
     // Grant S3 permissions to the new role
-    chart_asset.grantRead(helmDeployRole);
-    this.cluster.awsAuth.addRoleMapping(helmDeployRole, { groups: ['system:masters'] });
+    chart_asset.grantRead(this.helmDeployRole);
+    this.cluster.awsAuth.addRoleMapping(this.helmDeployRole, { groups: ['system:masters'] });
 
     // Add additional S3 permissions if needed
-    helmDeployRole.addToPolicy(new iam.PolicyStatement({
+    this.helmDeployRole.addToPolicy(new iam.PolicyStatement({
       actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
       resources: [`${chart_asset.bucket.bucketArn}/`, `${chart_asset.bucket.bucketArn}/*`],
     }));
 
     // Create a CfnOutput for the role
     const roleOutput = new cdk.CfnOutput(this, 'HelmDeployRoleArn', {
-      value: helmDeployRole.roleArn,
+      value: this.helmDeployRole.roleArn,
       description: 'ARN of the Helm Deploy Role',
     });
 

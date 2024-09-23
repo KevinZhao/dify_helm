@@ -17,8 +17,8 @@
     ]
   },
   "context": {
-    "dbPassword": "Your.dbPassword",
-    "opensearchPassword": "Your.aosPassword",
+    "dbPassword": "Your.dbPassword.0910",
+    "opensearchPassword": "Your.aosPassword.0910",
     "S3AccessKey": "Your.S3.AccessKey",
     "S3SecretKey": "Your.S3.SecretKey",
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,

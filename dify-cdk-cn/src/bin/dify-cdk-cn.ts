@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 
 // Local definition
-import { DifyHelmStack } from '../lib/dify-helm-stack';
+import { DifyHelmStack } from '../lib/Dify/dify-helm-stack';
 import { VPCStack } from '../lib/VPC/vpc-stack';
 import { S3Stack } from '../lib/S3/s3-stack';
 import { RDSStack } from '../lib/RDS/rds-stack';
@@ -80,7 +80,9 @@ const s3BucketName = cdk.Fn.importValue('S3BucketName');
 // Phase 2
 // Deploy Dify Helm Chart
 const difyHelmStack = new DifyHelmStack(app, 'DifyStack', {
+    // EKS
     cluster: eksStack.cluster,
+    helmDeployRole: eksStack.helmDeployRole,
 
     // RDS
     dbEndpoint: dbEndpoint,

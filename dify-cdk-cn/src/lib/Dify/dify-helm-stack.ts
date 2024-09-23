@@ -1,11 +1,17 @@
 import * as cdk from 'aws-cdk-lib';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as s3_assets from 'aws-cdk-lib/aws-s3-assets';
 
 // Local definition
 import * as eks from 'aws-cdk-lib/aws-eks';
 
 interface DifyHelmStackProps extends cdk.StackProps {
+    // EKS
     cluster: eks.Cluster;
+    helmDeployRole: iam.Role;
 
     // RDS
     dbEndpoint: string;
@@ -47,11 +53,21 @@ export class DifyHelmStack extends cdk.Stack {
             throw new Error("Context variable 'S3SecretKey' is missing");
         }
 
+        // Create the chart asset
+        const chart_asset = new s3_assets.Asset(this, "DifyChartAsset", {
+            path: path.join(__dirname, 'dify/')
+        });
+
+        // Use the HelmDeplyRole for chart deployment
+        const helmDeployRole = props.helmDeployRole;
+
+        // Grant S3 permissions to the role
+        chart_asset.grantRead(helmDeployRole);
+
         // Here comes dify helm configuration  
         const difyHelm = new eks.HelmChart(this, 'DifyHelmChart', {
             cluster: props.cluster,
-            chart: 'dify',
-            repository: 'https://douban.github.io/charts/',
+            chartAsset: chart_asset,
             release: 'dify',
             namespace: 'default',
             values: {
@@ -121,6 +137,7 @@ export class DifyHelmStack extends cdk.Stack {
                         //'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:ap-southeast-1:788668107894:certificate/6404aaf8-6051-4637-8d93-d948932b18b6',
                     },
                     hosts: [{
+                        //Specify your host on ALB DNS name
                         host: 'k8s-default-dify-324ef51b8a-1404288550.cn-northwest-1.elb.amazonaws.com.cn',
                         paths: [
                             {
