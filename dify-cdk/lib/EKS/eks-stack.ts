@@ -9,7 +9,6 @@ import { Construct } from 'constructs';
 interface EKSClusterStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
   subnets: ec2.SelectedSubnets;
-  //rdsSecretArn: string; // 使用 RDSStack 的输出
 }
 
 export class EKSStack extends cdk.Stack {
@@ -51,19 +50,6 @@ export class EKSStack extends cdk.Stack {
       authenticationMode: eks.AuthenticationMode.API_AND_CONFIG_MAP,
     });
 
-    //This is for debug usage
-    const adminUser = iam.User.fromUserName(this, 'AdminUser', 'admin');
-
-    // 将 IAM 用户添加到 system:masters 组
-    this.cluster.awsAuth.addUserMapping(adminUser, {
-      groups: ['system:masters'],
-      username: 'admin',
-    });
-
-    // Deploy ALBC if it doesn't exist
-    const _ALBC = new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
-      cluster: this.cluster,})
-
     // 创建节点组 IAM 角色
     const nodeGroupRole = new iam.Role(this, 'NodeGroupRole', {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
@@ -74,6 +60,13 @@ export class EKSStack extends cdk.Stack {
       ],
     });
 
+    const invokeSagemakerPolicy = new iam.PolicyStatement({
+      actions: ['sagemaker:InvokeEndpoint'],
+      resources: ['*'], 
+    });
+    
+    nodeGroupRole.addToPolicy(invokeSagemakerPolicy);
+
     this.cluster.addNodegroupCapacity('NodeGroup', {
       instanceTypes: [new ec2.InstanceType(this.node.tryGetContext('NodeInstanceType') || 'm6g.large')],
       minSize: this.node.tryGetContext('NodeGroupMinSize') || 2,
@@ -81,6 +74,10 @@ export class EKSStack extends cdk.Stack {
       maxSize: this.node.tryGetContext('NodeGroupMaxSize') || 4,
       nodeRole: nodeGroupRole,
     });
+
+    // Deploy ALBC if it doesn't exist
+    const _ALBC = new ALBCDeploymentStack(this, 'ALBCDeploymentStack', {
+      cluster: this.cluster,})
 
     // 输出 EKS 集群相关信息
     new cdk.CfnOutput(this, 'ClusterName', {

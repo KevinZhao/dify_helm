@@ -88,10 +88,8 @@ cdk deploy --all --concurrency 5 --require-approval never
 5.dify 数据库初始化
 请找到一台可以连接 EKS 的终端，并运行
 ```bash
-kubectl get pod
+kubectl exec -it $(kubectl get pods -n dify -l app.kubernetes.io/component=api -o jsonpath='{.items[0].metadata.name}') -n dify -- flask db upgrade
 ```
-
-kubectl exec -it dify-api-5b76699958-mt868 -- flask db upgrade
 
 执行后，可以使用 http://ALBDNSName的方式访问 dify，并进行进行管理员注册。
 

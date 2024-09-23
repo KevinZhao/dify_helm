@@ -1,7 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-
-// Local definition
 import * as eks from 'aws-cdk-lib/aws-eks';
 
 interface DifyHelmStackProps extends cdk.StackProps {
@@ -52,7 +50,7 @@ export class DifyHelmStack extends cdk.Stack {
       chart: 'dify',
       repository: 'https://douban.github.io/charts/',
       release: 'dify',
-      namespace: 'default',
+      namespace: 'dify',
       values: {
         global: {
           //Specify your host on ALB DNS name
@@ -60,7 +58,7 @@ export class DifyHelmStack extends cdk.Stack {
           port: '',
           enableTLS: false,
           image: {
-            tag: '0.8.2',
+            tag: '0.8.3',
           },
           edition: 'SELF_HOSTED',
           storageType: 's3',
@@ -95,11 +93,9 @@ export class DifyHelmStack extends cdk.Stack {
 
             // CELERY_BROKER
             { name: 'CELERY_BROKER_URL', value: 'redis://'+':@'+ props.redisEndpoint + ':' + props.redisPort+'/1'},
-
             { name: 'BROKER_USE_SSL', value: 'true'},
             
             // S3
-            { name: 'S3_ENDPOINT', value: 'https://dify-788668107894-us-east-1.s3.us-east-1.amazonaws.com' },
             { name: 'S3_ENDPOINT', value: 'https://' + props.s3BucketName + '.s3.' + this.region + '.amazonaws.com' },
             { name: 'S3_BUCKET_NAME', value: props.s3BucketName },
             { name: 'S3_ACCESS_KEY', value: S3AccessKey },
@@ -118,7 +114,7 @@ export class DifyHelmStack extends cdk.Stack {
             'alb.ingress.kubernetes.io/target-type': 'ip',
             'alb.ingress.kubernetes.io/listen-ports': '[{"HTTP": 80}]',
             //'alb.ingress.kubernetes.io/listen-ports': '[{"HTTPS": 443}]',
-            //'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:ap-southeast-1:788668107894:certificate/6404aaf8-6051-4637-8d93-d948932b18b6',
+            //'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:us-west-2:788668107894:certificate/ef51825b-4626-48af-a05e-4147ae485caf',
           },
           hosts: [{
             host: '',
@@ -393,9 +389,8 @@ export class DifyHelmStack extends cdk.Stack {
         minio:{
           embedded: false,
         },
-
       }
     });
-  
+
   }
 }
