@@ -73,7 +73,7 @@ export class DifyHelmStack extends cdk.Stack {
             values: {
                 global: {
                     //Specify your host on ALB DNS name
-                    host: 'k8s-default-dify-324ef51b8a-1404288550.cn-northwest-1.elb.amazonaws.com.cn',
+                    host: '',
                     port: '80',
                     enableTLS: false,
                     image: {
@@ -83,8 +83,10 @@ export class DifyHelmStack extends cdk.Stack {
                     storageType: 's3',
                     extraEnvs: [],
                     extraBackendEnvs: [
-                        /* SECRET_KEY is a must, A key used to securely sign session cookies and encrypt sensitive information in the database. This variable needs to be set when starting for the first time.You can use "openssl rand -base64 42" to generate a strong key. */
-                        { name: 'SECRET_KEY', value: '9QImE6jta7cBjteIVG65klCp9EOXjxD/oVWDCTsbE0qwo3uT5AZNrXDD' },
+                        /* SECRET_KEY is a must, A key used to securely sign session cookies and encrypt sensitive information in the database. 
+                        This variable needs to be set when starting for the first time.
+                        You can use "openssl rand -base64 42" to generate a strong key. */
+                        { name: 'SECRET_KEY', value: '' },
                         { name: 'LOG_LEVEL', value: 'DEBUG' },
 
                         // RDS Postgres
@@ -134,11 +136,11 @@ export class DifyHelmStack extends cdk.Stack {
                         'alb.ingress.kubernetes.io/target-type': 'ip',
                         'alb.ingress.kubernetes.io/listen-ports': '[{"HTTP": 80}]',
                         //'alb.ingress.kubernetes.io/listen-ports': '[{"HTTPS": 443}]',
-                        //'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:ap-southeast-1:788668107894:certificate/6404aaf8-6051-4637-8d93-d948932b18b6',
+                        //'alb.ingress.kubernetes.io/certificate-arn': '{your_acm_certificate_arn}',
                     },
                     hosts: [{
                         //Specify your host on ALB DNS name
-                        host: 'k8s-default-dify-324ef51b8a-1404288550.cn-northwest-1.elb.amazonaws.com.cn',
+                        host: '',
                         paths: [
                             {
                                 path: '/api',
@@ -215,7 +217,7 @@ export class DifyHelmStack extends cdk.Stack {
                     replicaCount: 1,
 
                     image: {
-                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-web',
+                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-web', // replace with your preferred repo
                         pullPolicy: 'IfNotPresent',
                         tag: ''
                     },
@@ -276,7 +278,7 @@ export class DifyHelmStack extends cdk.Stack {
                 api: {
                     replicaCount: 1,
                     image: {
-                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-api',
+                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-api', // replace with your preferred repo
                         pullPolicy: 'IfNotPresent',
                         tag: ''
                     },
@@ -331,7 +333,7 @@ export class DifyHelmStack extends cdk.Stack {
                 worker: {
                     replicaCount: 1,
                     image: {
-                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-api',
+                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-api', // replace with your preferred repo
                         pullPolicy: 'IfNotPresent',
                         tag: ''
                     },
@@ -359,7 +361,7 @@ export class DifyHelmStack extends cdk.Stack {
                     apiKey: 'dify-sandbox',
                     apiKeySecret: '',
                     image: {
-                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-sandbox',
+                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-sandbox', // replace with your preferred repo
                         pullPolicy: 'IfNotPresent',
                         tag: 'latest'
                     },
