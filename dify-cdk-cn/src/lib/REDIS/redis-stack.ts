@@ -7,7 +7,7 @@ interface RedisStackProps extends cdk.StackProps {
   redisClusterName: string;
   prefix: string;
   vpc: ec2.Vpc;
-  subnets: ec2.SelectedSubnets;
+  subnets: ec2.SubnetSelection;
 }
 
 export class RedisStack extends cdk.Stack {
@@ -17,10 +17,11 @@ export class RedisStack extends cdk.Stack {
     super(scope, id, props);
 
     // Create a Security Group for ElastiCache Redis
-    const redisSecurityGroup = new ec2.SecurityGroup(this, `${props.prefix}-redis-security-group`, {
+    const redisSecurityGroup = new ec2.SecurityGroup(this, `RedisSecurityGroup`, {
       vpc: props.vpc,
       description: 'Security group for ElastiCache Redis',
       allowAllOutbound: true,
+      securityGroupName: `${props.prefix}-redis-security-group`,
     });
 
     redisSecurityGroup.addIngressRule(
@@ -30,36 +31,32 @@ export class RedisStack extends cdk.Stack {
     );
 
     // Create a subnet group for the Redis cluster
-    const redisSubnetGroup = new elasticache.CfnSubnetGroup(this, `${props.prefix}-redis-subnet-group`, {
+    const redisSubnetGroup = new elasticache.CfnSubnetGroup(this, 'RedisSubnetGroup', {
       description: 'Dify Subnet group for Redis cluster',
-      subnetIds: props.subnets.subnetIds,
-    });
-
-    // Create a Redis parameter group
-    const redisParameterGroup = new elasticache.CfnParameterGroup(this, `${props.prefix}-redis-parameter-group`, {
-      cacheParameterGroupFamily: 'redis7',
-      description: 'Dify Parameter group for Redis 7.x cluster',
-      properties: {
-        'maxmemory-policy': 'allkeys-lru',
-      },
+      subnetIds: props.vpc.selectSubnets(props.subnets).subnetIds,
+      cacheSubnetGroupName: `${props.prefix}-redis-subnet-group`,
     });
 
     // Create the Redis cluster with cluster mode enabled
     this.redisCluster = new elasticache.CfnReplicationGroup(this, props.redisClusterName, {
       replicationGroupDescription: 'Redis cluster for Dify',
+      replicationGroupId: props.redisClusterName,
       engine: 'redis',
-      cacheNodeType: 'cache.t3.medium',
-      numNodeGroups: 1,
-      replicasPerNodeGroup: 1,
-      automaticFailoverEnabled: true,
-      multiAzEnabled: true,
-      cacheSubnetGroupName: redisSubnetGroup.ref,
+      cacheNodeType: 'cache.m7g.large',
+      cacheSubnetGroupName: redisSubnetGroup.cacheSubnetGroupName,
       securityGroupIds: [redisSecurityGroup.securityGroupId],
+      automaticFailoverEnabled: true,
+      transitEncryptionEnabled: true,  // Enable transit encryption
+      transitEncryptionMode: 'preferred', // Allow both encrypted and unencrypted connections
+      atRestEncryptionEnabled: true,
+      numCacheClusters: 2, // A primary and a replica node
+      multiAzEnabled: true,
+      preferredCacheClusterAZs: props.vpc.selectSubnets(props.subnets).availabilityZones,
       port: 6379,
       engineVersion: '7.0',  // Updated to Redis 7.x
-      replicationGroupId: props.redisClusterName,
-      cacheParameterGroupName: redisParameterGroup.ref,
     });
+
+    this.redisCluster.addDependency(redisSubnetGroup);
 
     // Output the Redis cluster endpoint
     new cdk.CfnOutput(this, 'RedisPrimaryEndpoint', {
