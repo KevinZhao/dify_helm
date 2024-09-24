@@ -77,7 +77,7 @@ export class DifyHelmStack extends cdk.Stack {
                     port: '80',
                     enableTLS: false,
                     image: {
-                        tag: '0.8.2',
+                        tag: '0.8.3', // replace for other versions
                     },
                     edition: 'SELF_HOSTED',
                     storageType: 's3',
@@ -217,7 +217,7 @@ export class DifyHelmStack extends cdk.Stack {
                     replicaCount: 1,
 
                     image: {
-                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-web', // replace with your preferred repo
+                        repository: '048912060910.dkr.ecr.cn-northwest-1.amazonaws.com.cn/dockerhub/langgenius/dify-web', // replace with your preferred repo
                         pullPolicy: 'IfNotPresent',
                         tag: ''
                     },
@@ -278,7 +278,7 @@ export class DifyHelmStack extends cdk.Stack {
                 api: {
                     replicaCount: 1,
                     image: {
-                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-api', // replace with your preferred repo
+                        repository: '048912060910.dkr.ecr.cn-northwest-1.amazonaws.com.cn/dockerhub/langgenius/dify-api', // replace with your preferred repo
                         pullPolicy: 'IfNotPresent',
                         tag: ''
                     },
@@ -333,7 +333,7 @@ export class DifyHelmStack extends cdk.Stack {
                 worker: {
                     replicaCount: 1,
                     image: {
-                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-api', // replace with your preferred repo
+                        repository: '048912060910.dkr.ecr.cn-northwest-1.amazonaws.com.cn/dockerhub/langgenius/dify-web', // replace with your preferred repo
                         pullPolicy: 'IfNotPresent',
                         tag: ''
                     },
@@ -361,7 +361,7 @@ export class DifyHelmStack extends cdk.Stack {
                     apiKey: 'dify-sandbox',
                     apiKeySecret: '',
                     image: {
-                        repository: '772532280796.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-sandbox', // replace with your preferred repo
+                        repository: '048912060910.dkr.ecr.cn-northwest-1.amazonaws.com.cn/dockerhub/langgenius/dify-sandbox', // replace with your preferred repo
                         pullPolicy: 'IfNotPresent',
                         tag: 'latest'
                     },

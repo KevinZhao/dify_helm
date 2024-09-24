@@ -96,7 +96,7 @@ cdk deploy --all --concurrency 5 --require-approval never
 
 ### 8. 初始化 dify 数据库
 ```bash
-kubectl exec -it $(kubectl get pods -n dify -l app.kubernetes.io/component=api -o jsonpath='{.items[0].metadata.name}') -n dify -- flask db upgrade
+kubectl exec -it $(kubectl get pods -l app.kubernetes.io/component=api --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}') -- flask db upgrade
 ```
 
 ### 9. 访问 Dify
@@ -140,3 +140,4 @@ docker push {your_account_id}.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius
 docker push {your_account_id}.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-web:0.8.2
 
 docker push {your_account_id}.dkr.ecr.cn-northwest-1.amazonaws.com.cn/langgenius/dify-sandbox:latest
+```
