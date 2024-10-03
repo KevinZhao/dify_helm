@@ -38,3 +38,5 @@ dify-cdk/lib/asset.abc70c90ded969d12235ca11768293cb20557cff54518518480c0d9fb344a
 dify-cdk/lib/read.82832.1.lock
 dify-cdk/cdk-dify.zhaokm.org.json
 dify-cdk/bin/dify-helm-stack-dify.zhaokm.org.ts
+dify-cdk/cdk_oregon.json
+dify-cdk/bin/dify-helm-stack_oregon.ts
