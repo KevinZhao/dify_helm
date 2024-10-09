@@ -43,8 +43,99 @@ export class DifyHelmStack extends cdk.Stack {
     if (!S3SecretKey) {
       throw new Error("Context variable 'S3SecretKey' is missing");
     }
+     
+    const difySecretKey = this.node.tryGetContext('difySecretKey');
+    if (!difySecretKey) {
+      throw new Error("Context variable 'difySecretKey' is missing");
+    }
 
-    // Here comes dify helm configuration  
+    const ns = new eks.KubernetesManifest(this, "dify-ns", {
+					  cluster: props.cluster,
+					  manifest: [{
+      apiVersion: "v1",
+      kind: "Namespace",
+      metadata: {
+        name: "dify",
+      }
+    }],
+    overwrite: true})
+
+    const dbSecret = new eks.KubernetesManifest(this, "dify-db-secret", {
+                                          cluster: props.cluster,
+                                          manifest: [{
+      apiVersion: "v1",
+      kind: "Secret",
+      metadata: {
+        name: "dify-db-secret",
+        namespace: "dify",
+      },
+      
+      type: "Opaque",
+      data: {
+        password: Buffer.from(dbPassword).toString('base64'),
+      }
+    }],
+					      overwrite: true})
+    dbSecret.node.addDependency(ns)
+
+    const osSecret = new eks.KubernetesManifest(this, "dify-os-secret", {
+                                          cluster: props.cluster,
+                                          manifest: [{
+      apiVersion: "v1",
+      kind: "Secret",
+      metadata: {
+        name: "dify-os-secret",
+        namespace: "dify",
+      },
+      type: "Opaque",
+      data: {
+        opensearch_password: Buffer.from(opensearchPassword).toString('base64'),
+      }
+    }],
+                                              overwrite: true})
+    osSecret.node.addDependency(ns)
+
+
+    const s3Secret = new eks.KubernetesManifest(this, "dify-s3", {
+                                          cluster: props.cluster,
+                                          manifest: [{
+      apiVersion: "v1",
+      kind: "Secret",
+      metadata: {
+        name: "dify-s3",
+        namespace: "dify",
+      },
+      type: "Opaque",
+      data: {
+        access_key: Buffer.from(S3AccessKey).toString('base64'),
+	secret_key: Buffer.from(S3SecretKey).toString('base64'),
+      }
+    }],
+                                              overwrite: true})
+    s3Secret.node.addDependency(ns)
+
+
+    const difykey = new eks.KubernetesManifest(this, "dify-space", {
+                                          cluster: props.cluster,
+                                          manifest: [{
+      apiVersion: "v1",
+      kind: "Secret",
+      metadata: {
+        name: "dify-space",
+        namespace: "dify",
+      },
+      type: "Opaque",
+      data: {
+        difysecretkey: Buffer.from(difySecretKey).toString('base64'),
+      }
+    }],
+                                              overwrite: true})
+    difykey.node.addDependency(ns)
+
+
+
+
+    // Here comes dify helm configuration
     const difyHelm = new eks.HelmChart(this, 'DifyHelmChart', {
       cluster: props.cluster,
       chart: 'dify',
@@ -54,23 +145,23 @@ export class DifyHelmStack extends cdk.Stack {
       values: {
         global: {
           //Specify your host on ALB DNS name
-          host: '',
+          host: 'k8s-dify-dify-a861a85e44-1597205769.us-east-1.elb.amazonaws.com',
           port: '',
           enableTLS: false,
           image: {
-            tag: '0.9.1',
+            tag: '0.8.3',
           },
           edition: 'SELF_HOSTED',
           storageType: 's3',
           extraEnvs: [],
           extraBackendEnvs: [
             /* SECRET_KEY is a must, A key used to securely sign session cookies and encrypt sensitive information in the database. This variable needs to be set when starting for the first time.You can use "openssl rand -base64 42" to generate a strong key. */
-            { name: 'SECRET_KEY', value: 'd/BV81Qc0hY4BSYzoVPdG9evGco1YBYIxyGBWOrLRFe4nwbKTYGnHQdI'},
+            { name: 'SECRET_KEY', valueFrom:{ secretKeyRef: { name: 'dify-space', key: 'difysecretkey' } } },
             { name: 'LOG_LEVEL', value: 'DEBUG'},
 
             // RDS Postgres
-            { name: 'DB_USERNAME', value: 'postgres' },
-            { name: 'DB_PASSWORD', value: dbPassword },  
+            { name: 'DB_USERNAME', value: 'dify' },
+            { name: 'DB_PASSWORD', valueFrom: { secretKeyRef: { name: 'dify-db-secret', key: 'password' } } },
             { name: 'DB_HOST', value: props.dbEndpoint },
             { name: 'DB_PORT', value: props.dbPort },
             { name: 'DB_DATABASE', value: 'dify' },
@@ -80,11 +171,11 @@ export class DifyHelmStack extends cdk.Stack {
             { name: 'OPENSEARCH_HOST', value: props.openSearchEndpoint },
             { name: 'OPENSEARCH_PORT', value: '443'},
             { name: 'OPENSEARCH_USER', value: 'admin' },
-            { name: 'OPENSEARCH_PASSWORD', value: opensearchPassword },
+            { name: 'OPENSEARCH_PASSWORD', valueFrom:{ secretKeyRef: { name: 'dify-os-secret', key: 'opensearch_password' } } },
             { name: 'OPENSEARCH_SECURE', value: 'true' },
 
-            // Redis 
-            { name: 'REDIS_HOST', value: props.redisEndpoint },  
+            // Redis
+            { name: 'REDIS_HOST', value: props.redisEndpoint },
             { name: 'REDIS_PORT', value: props.redisPort },
             { name: 'REDIS_DB', value: '0' },
             { name: 'REDIS_USERNAME', value: '' },
@@ -94,12 +185,12 @@ export class DifyHelmStack extends cdk.Stack {
             // CELERY_BROKER
             { name: 'CELERY_BROKER_URL', value: 'redis://'+':@'+ props.redisEndpoint + ':' + props.redisPort+'/1'},
             { name: 'BROKER_USE_SSL', value: 'true'},
-            
+
             // S3
             { name: 'S3_ENDPOINT', value: 'https://' + props.s3BucketName + '.s3.' + this.region + '.amazonaws.com' },
             { name: 'S3_BUCKET_NAME', value: props.s3BucketName },
-            { name: 'S3_ACCESS_KEY', value: S3AccessKey },
-            { name: 'S3_SECRET_KEY', value: S3SecretKey },
+            { name: 'S3_ACCESS_KEY', valueFrom:{ secretKeyRef: { name: 'dify-s3', key: 'access_key' } } },
+            { name: 'S3_SECRET_KEY', valueFrom:{ secretKeyRef: { name: 'dify-s3', key: 'secret_key' } } },
             { name: 'S3_REGION', value: this.region },
           ],
           labels: []
@@ -117,7 +208,7 @@ export class DifyHelmStack extends cdk.Stack {
             //'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:us-west-2:788668107894:certificate/ef51825b-4626-48af-a05e-4147ae485caf',
           },
           hosts: [{
-            host: '',
+            host: 'k8s-dify-dify-a861a85e44-1597205769.us-east-1.elb.amazonaws.com',
             paths: [
               {
                 path: '/api',
@@ -184,7 +275,7 @@ export class DifyHelmStack extends cdk.Stack {
         },
 
         serviceAccount: {
-          create: true, 
+          create: true,
           annotations: {
           },
           name: '',
@@ -196,24 +287,24 @@ export class DifyHelmStack extends cdk.Stack {
           image: {
             repository: 'langgenius/dify-web',
             pullPolicy: 'IfNotPresent',
-            tag: '' 
+            tag: ''
           },
           envs: [
           ],
-          imagePullSecrets: [], 
+          imagePullSecrets: [],
           podAnnotations: {},
           podSecurityContext: {
 
           },
           securityContext: {
-            
+
           },
           service: {
             type: 'ClusterIP',
-            port: 80 
+            port: 80
           },
 
-          containerPort: 3000, 
+          containerPort: 3000,
           resources: {
             // limits: { cpu: '500m', memory: '512Mi' },
             // requests: { cpu: '200m', memory: '256Mi' }
@@ -274,10 +365,10 @@ export class DifyHelmStack extends cdk.Stack {
 
           service: {
             type: 'ClusterIP',
-            port: 80 
+            port: 80
           },
 
-          containerPort: 5001, 
+          containerPort: 5001,
           resources: {
             limits: { cpu: '2', memory: '2Gi' },
             requests: { cpu: '1', memory: '1Gi' }
@@ -326,24 +417,24 @@ export class DifyHelmStack extends cdk.Stack {
             targetCPUUtilizationPercentage: 80
           },
           livenessProbe: {
-            
+
           },
           readinessProbe: {
-            
+
           }
         },
 
         sandbox: {
           replicaCount: 1,
-          apiKey: 'dify-sandbox', 
-          apiKeySecret: '', 
+          apiKey: 'dify-sandbox',
+          apiKeySecret: '',
           image: {
             repository: 'langgenius/dify-sandbox',
             pullPolicy: 'IfNotPresent',
-            tag: '' 
+            tag: ''
           },
           config: {
-            python_requirements: '' 
+            python_requirements: ''
           },
           envs: [
             { name: 'GIN_MODE', value: 'release' },
@@ -351,9 +442,9 @@ export class DifyHelmStack extends cdk.Stack {
           ],
           service: {
             type: 'ClusterIP',
-            port: 80 
+            port: 80
           },
-          containerPort: 8194, 
+          containerPort: 8194,
           resources: {
           },
           readinessProbe: {
@@ -379,7 +470,7 @@ export class DifyHelmStack extends cdk.Stack {
         },
 
         redis: {
-          embedded: false, 
+          embedded: false,
         },
 
         postgresql:{
@@ -391,6 +482,8 @@ export class DifyHelmStack extends cdk.Stack {
         },
       }
     });
+
+    difyHelm.node.addDependency(dbSecret)
 
   }
 }
