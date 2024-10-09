@@ -145,11 +145,11 @@ export class DifyHelmStack extends cdk.Stack {
       values: {
         global: {
           //Specify your host on ALB DNS name
-          host: 'k8s-dify-dify-a861a85e44-1597205769.us-east-1.elb.amazonaws.com',
+          host: '',
           port: '',
           enableTLS: false,
           image: {
-            tag: '0.8.3',
+            tag: '0.9.1',
           },
           edition: 'SELF_HOSTED',
           storageType: 's3',
@@ -208,7 +208,7 @@ export class DifyHelmStack extends cdk.Stack {
             //'alb.ingress.kubernetes.io/certificate-arn': 'arn:aws:acm:us-west-2:788668107894:certificate/ef51825b-4626-48af-a05e-4147ae485caf',
           },
           hosts: [{
-            host: 'k8s-dify-dify-a861a85e44-1597205769.us-east-1.elb.amazonaws.com',
+            host: '',
             paths: [
               {
                 path: '/api',
