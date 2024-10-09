@@ -17,10 +17,11 @@
     ]
   },
   "context": {
-    "dbPassword": "Your.dbPassword.0910",
-    "opensearchPassword": "Your.aosPassword.0910",
-    "S3AccessKey": "Your.S3.AccessKey",
-    "S3SecretKey": "Your.S3.SecretKey",
+    "dbPassword": "awsAWS09100910!",
+    "opensearchPassword": "awsAWS09100910!",
+    "S3AccessKey": "xxx",
+    "S3SecretKey": "xxx",
+    "difySecretKey":"d/BV81Qc0hY4BSYzoVPdG9evGco1YBYIxyGBWOrLRFe4nwbKTYGnHQdI",
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": [
