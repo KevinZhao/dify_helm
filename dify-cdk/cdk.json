@@ -21,7 +21,7 @@
     "opensearchPassword": "awsAWS09100910!",
     "S3AccessKey": "xxx",
     "S3SecretKey": "xxx",
-    "difySecretKey":"d/BV81Qc0hY4BSYzoVPdG9evGco1YBYIxyGBWOrLRFe4nwbKTYGnHQdI",
+    "difySecretKey":"xxx",
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": [
