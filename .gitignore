@@ -40,3 +40,4 @@ dify-cdk/cdk-dify.zhaokm.org.json
 dify-cdk/bin/dify-helm-stack-dify.zhaokm.org.ts
 dify-cdk/cdk_oregon.json
 dify-cdk/bin/dify-helm-stack_oregon.ts
+dify-cdk/cdk_singapore.json

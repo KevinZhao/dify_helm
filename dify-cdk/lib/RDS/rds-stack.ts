@@ -43,7 +43,7 @@ export class RDSStack extends cdk.Stack {
       credentials: rds.Credentials.fromPassword('postgres', cdk.SecretValue.unsafePlainText(dbPassword)),
       clusterIdentifier: 'dify-db',
       defaultDatabaseName: 'dify',
-      serverlessV2MaxCapacity: 8,
+      serverlessV2MaxCapacity: 4,
       serverlessV2MinCapacity: 0.5,
       securityGroups: [dbSecurityGroup],
       writer: rds.ClusterInstance.serverlessV2('writer', {
