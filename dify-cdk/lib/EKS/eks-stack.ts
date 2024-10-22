@@ -67,8 +67,14 @@ export class EKSStack extends cdk.Stack {
     
     nodeGroupRole.addToPolicy(invokeSagemakerPolicy);
 
+    // 获取当前的 AWS 区域
+    const currentRegion = cdk.Stack.of(this).region;
+
+    // 根据区域选择 EKS 节点实例类型
+    const nodeInstanceType = this.getNodeInstanceTypeForRegion(currentRegion);
+
     this.cluster.addNodegroupCapacity('NodeGroup', {
-      instanceTypes: [new ec2.InstanceType(this.node.tryGetContext('NodeInstanceType') || 'm6g.large')],
+      instanceTypes: [new ec2.InstanceType(nodeInstanceType)],
       minSize: this.node.tryGetContext('NodeGroupMinSize') || 2,
       desiredSize: this.node.tryGetContext('NodeGroupDesiredSize') || 2,
       maxSize: this.node.tryGetContext('NodeGroupMaxSize') || 4,
@@ -84,5 +90,29 @@ export class EKSStack extends cdk.Stack {
       value: this.cluster.clusterName,
       exportName: 'EKSClusterName',
     });
+  }
+
+  // 根据 region 返回不同的实例类型
+  private getNodeInstanceTypeForRegion(region: string): string {
+    const regionSpecificNodeTypes: { [key: string]: string } = {
+      'us-east-1': 'm7g.large',
+      'us-east-2': 'm7g.large',
+      'us-west-1': 'm7g.large',
+      'us-west-2': 'm7g.large',
+      'ap-southeast-1': 'm7g.large',
+      'ap-northeast-1': 'm7g.large',
+      'eu-central-1': 'm7g.large',
+      'eu-west-1': 'm7g.large',
+      'eu-west-2': 'm7g.large',
+      'eu-west-3': 'm7g.large',
+      'eu-north-1': 'm7g.large',
+      'ap-southeast-2': 'm7g.large',
+      'ap-northeast-2': 'm7g.large',
+    };
+
+    // 默认机型
+    const defaultNodeType = 'm6i.large';
+
+    return regionSpecificNodeTypes[region] || defaultNodeType;
   }
 }

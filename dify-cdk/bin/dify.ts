@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
 import { DifyHelmStack } from './dify-helm-stack';
+import { LangfuseHelmStack } from './langfuse-helm-stack';
 import { S3Stack } from '../lib/S3/s3-stack';
 import { VPCStack } from '../lib/VPC/vpc-stack';
 import { RDSStack } from '../lib/RDS/rds-stack';
@@ -27,13 +28,11 @@ const rdsStack = new RDSStack(app, 'DifyRDSStack', {
     subnets: privateSubnets 
 }); 
 
-
 const redisClusterStack = new RedisClusterStack(app, 'DifyRedisStack', {
     vpc: vpcStack.vpc,
     subnets: privateSubnets
 });
 
-    
 const openSearchStack = new OpenSearchStack(app, 'DifyOpenSearchStack', {
     vpc: vpcStack.vpc,
     subnets: privateSubnets,
@@ -70,6 +69,15 @@ const difyHelmStack = new DifyHelmStack(app, 'DifyStack', {
     // OpenSearch
     openSearchEndpoint: openSearchEndpoint,
 
+});
+
+// 3. deploy langfuse helm
+const langfuseHelmStack = new LangfuseHelmStack(app, 'LangfuseStack', {
+    cluster: eksStack.cluster,
+
+    // RDS
+    dbEndpoint: dbEndpoint,
+    dbPort: dbPort
 });
 
 // 设置 difyHelmStack 依赖于 eksStack
