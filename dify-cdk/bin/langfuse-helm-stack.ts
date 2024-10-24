@@ -72,7 +72,7 @@ export class LangfuseHelmStack extends cdk.Stack {
     const langfuseHelm = new eks.HelmChart(this, 'LangfuseHelmChart', {
       cluster: props.cluster,
       chart: 'langfuse',
-      repository: 'https://your-helm-repo-url/',
+      repository: 'https://langfuse.github.io/langfuse-k8s',
       release: 'langfuse',
       namespace: 'langfuse',
       values: {
@@ -80,7 +80,7 @@ export class LangfuseHelmStack extends cdk.Stack {
           port: 3000,
           nodeEnv: 'production',
           nextauth: {
-            url: `http://${props.dbEndpoint}:${props.dbPort}`
+            url: `http://localhost:3000}`
           },
           additionalEnv: [
             { name: 'DATABASE_URL', value: `postgresql://postgres:${dbPassword}@${props.dbEndpoint}:${props.dbPort}/postgres` },

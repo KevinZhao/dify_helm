@@ -19,9 +19,11 @@
   "context": {
     "dbPassword": "awsAWS09100910!",
     "opensearchPassword": "awsAWS09100910!",
-    "S3AccessKey": "xxx",
-    "S3SecretKey": "xxx",
-    "difySecretKey":"xxx",
+    "S3AccessKey": "Your S3AccessKey",
+    "S3SecretKey": "Your S3SecretKey",
+    "difySecretKey":"run openssl rand -base64 42 to create",
+    "nextAuthSecret":"openssl rand -base64 32",
+    "salt":"openssl rand -base64 32",
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": [

@@ -126,7 +126,7 @@ export class DifyHelmStack extends cdk.Stack {
           host: '',
           port: '',
           enableTLS: false,
-          image: { tag: '0.10.0' },
+          image: { tag: '0.10.1' },
           edition: 'SELF_HOSTED',
           storageType: 's3',
           extraEnvs: [],
@@ -183,7 +183,46 @@ export class DifyHelmStack extends cdk.Stack {
               {
                 path: '/api',
                 pathType: 'Prefix',
-                backend: { serviceName: 'dify-api-svc', servicePort: 80 },
+                backend: {
+                  serviceName: 'dify-api-svc',
+                  servicePort: 80
+                },
+                annotations: {
+                  'alb.ingress.kubernetes.io/healthcheck-path': '/health',
+                  'alb.ingress.kubernetes.io/healthcheck-port': '80'
+                }
+              },
+              {
+                path: '/v1',
+                pathType: 'Prefix',
+                backend: {
+                  serviceName: 'dify-api-svc',
+                  servicePort: 80
+                },
+                annotations: {
+                  'alb.ingress.kubernetes.io/healthcheck-path': '/health',
+                  'alb.ingress.kubernetes.io/healthcheck-port': '80'
+                }
+              },
+              {
+                path: '/console/api',
+                pathType: 'Prefix',
+                backend: {
+                  serviceName: 'dify-api-svc',
+                  servicePort: 80
+                },
+                annotations: {
+                  'alb.ingress.kubernetes.io/healthcheck-path': '/health',
+                  'alb.ingress.kubernetes.io/healthcheck-port': '80'
+                }
+              },
+              {
+                path: '/files',
+                pathType: 'Prefix',
+                backend: {
+                  serviceName: 'dify-api-svc',
+                  servicePort: 80
+                },
                 annotations: {
                   'alb.ingress.kubernetes.io/healthcheck-path': '/health',
                   'alb.ingress.kubernetes.io/healthcheck-port': '80'
@@ -215,7 +254,58 @@ export class DifyHelmStack extends cdk.Stack {
             pullPolicy: 'IfNotPresent',
             tag: ''
           },
-          service: { type: 'ClusterIP', port: 80 }
+          envs: [
+          ],
+          imagePullSecrets: [], 
+          podAnnotations: {},
+          podSecurityContext: {
+
+          },
+          securityContext: {
+            
+          },
+          service: {
+            type: 'ClusterIP',
+            port: 80 
+          },
+
+          containerPort: 3000, 
+          resources: {
+            // limits: { cpu: '500m', memory: '512Mi' },
+            // requests: { cpu: '200m', memory: '256Mi' }
+          },
+          autoscaling: {
+            enabled: false,
+            minReplicas: 1,
+            maxReplicas: 100,
+            targetCPUUtilizationPercentage: 80
+          },
+
+          livenessProbe: {
+            httpGet: {
+              path: '/apps',
+              port: 'http',
+              httpHeaders: [{ name: 'accept-language', value: 'en' }]
+            },
+            initialDelaySeconds: 3,
+            timeoutSeconds: 5,
+            periodSeconds: 30,
+            successThreshold: 1,
+            failureThreshold: 2
+          },
+
+          readinessProbe: {
+            httpGet: {
+              path: '/apps',
+              port: 'http',
+              httpHeaders: [{ name: 'accept-language', value: 'en' }]
+            },
+            initialDelaySeconds: 3,
+            timeoutSeconds: 5,
+            periodSeconds: 30,
+            successThreshold: 1,
+            failureThreshold: 2
+          }
         },
 
         api: {
@@ -224,8 +314,135 @@ export class DifyHelmStack extends cdk.Stack {
             repository: 'langgenius/dify-api',
             pullPolicy: 'IfNotPresent',
             tag: ''
+          },
+          envs: [
+            { name: 'CODE_MAX_NUMBER', value: '9223372036854775807' },
+            { name: 'CODE_MIN_NUMBER', value: '-9223372036854775808' },
+            { name: 'CODE_MAX_STRING_LENGTH', value: '80000' },
+            { name: 'TEMPLATE_TRANSFORM_MAX_LENGTH', value: '80000' },
+            { name: 'CODE_MAX_STRING_ARRAY_LENGTH', value: '30' },
+            { name: 'CODE_MAX_OBJECT_ARRAY_LENGTH', value: '30' },
+            { name: 'CODE_MAX_NUMBER_ARRAY_LENGTH', value: '1000' }
+          ],
+          podAnnotations: {},
+          podSecurityContext: {},
+          securityContext: {},
+
+          service: {
+            type: 'ClusterIP',
+            port: 80 
+          },
+
+          containerPort: 5001, 
+          resources: {
+            limits: { cpu: '2', memory: '2Gi' },
+            requests: { cpu: '1', memory: '1Gi' }
+          },
+
+          livenessProbe: {
+            httpGet: {
+              path: '/health',
+              port: 'http'
+            },
+            initialDelaySeconds: 360,
+            timeoutSeconds: 10,
+            periodSeconds: 30,
+            successThreshold: 1,
+            failureThreshold: 5
+          },
+          readinessProbe: {
+            httpGet: {
+              path: '/health',
+              port: 'http'
+            },
+            initialDelaySeconds: 120,
+            timeoutSeconds: 10,
+            periodSeconds: 5,
+            successThreshold: 1,
+            failureThreshold: 10
           }
-        }
+        },
+        worker: {
+          replicaCount: 1,
+          image: {
+            repository: 'langgenius/dify-api',
+            pullPolicy: 'IfNotPresent',
+            tag: ''
+          },
+          podAnnotations: {},
+          podSecurityContext: {},
+          securityContext: {},
+          resources: {
+          },
+          autoscaling: {
+            enabled: false,
+            minReplicas: 1,
+            maxReplicas: 100,
+            targetCPUUtilizationPercentage: 80
+          },
+          livenessProbe: {
+            
+          },
+          readinessProbe: {
+            
+          }
+        },
+        sandbox: {
+          replicaCount: 1,
+          apiKey: 'dify-sandbox', 
+          apiKeySecret: '', 
+          image: {
+            repository: 'langgenius/dify-sandbox',
+            pullPolicy: 'IfNotPresent',
+            tag: '' 
+          },
+          config: {
+            python_requirements: '' 
+          },
+          envs: [
+            { name: 'GIN_MODE', value: 'release' },
+            { name: 'WORKER_TIMEOUT', value: '15' }
+          ],
+          service: {
+            type: 'ClusterIP',
+            port: 80 
+          },
+          containerPort: 8194, 
+          resources: {
+          },
+          readinessProbe: {
+            tcpSocket: {
+              port: 'http'
+            },
+            initialDelaySeconds: 1,
+            timeoutSeconds: 5,
+            periodSeconds: 5,
+            successThreshold: 1,
+            failureThreshold: 10
+          },
+          livenessProbe: {
+            tcpSocket: {
+              port: 'http'
+            },
+            initialDelaySeconds: 30,
+            timeoutSeconds: 5,
+            periodSeconds: 30,
+            successThreshold: 1,
+            failureThreshold: 2
+          }
+        },
+
+        redis: {
+          embedded: false, 
+        },
+
+        postgresql:{
+          embedded: false,
+        },
+
+        minio:{
+          embedded: false,
+        },
       }
     });
   }
