@@ -86,3 +86,6 @@ difyHelmStack.addDependency(rdsStack);
 difyHelmStack.addDependency(redisClusterStack);
 difyHelmStack.addDependency(s3Stack);
 difyHelmStack.addDependency(openSearchStack);
+
+langfuseHelmStack.addDependency(eksStack);
+langfuseHelmStack.addDependency(rdsStack);

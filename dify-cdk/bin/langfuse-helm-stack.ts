@@ -76,11 +76,12 @@ export class LangfuseHelmStack extends cdk.Stack {
       release: 'langfuse',
       namespace: 'langfuse',
       values: {
+        replicaCount: 2, 
         langfuse: {
           port: 3000,
           nodeEnv: 'production',
           nextauth: {
-            url: `http://localhost:3000}`
+            url: `http://localhost:3000`
           },
           additionalEnv: [
             { name: 'DATABASE_URL', value: `postgresql://postgres:${dbPassword}@${props.dbEndpoint}:${props.dbPort}/postgres` },
@@ -109,6 +110,9 @@ export class LangfuseHelmStack extends cdk.Stack {
               }
             ]
           }]
+        },
+        postgresql: {
+          deploy: false 
         }
       }
     });
