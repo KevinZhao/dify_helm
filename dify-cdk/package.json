@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@aws-cdk/lambda-layer-kubectl-v30": "2.0.1",
+    "@aws-sdk/client-ec2": "^3.679.0",
     "aws-cdk-lib": "^2.158.0",
     "aws-sdk": "^2.1691.0",
     "constructs": "10.3.0",
