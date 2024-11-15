@@ -1,3 +1,3 @@
 # dify on AWS
 
-This repo is temporarily not available, please consult to zkm8093@gmail.com.
+This repo had been moved to [dify-aws](https://github.com/aws-samples/solution-for-deploying-dify-on-aws).
