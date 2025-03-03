@@ -53,6 +53,8 @@ minio:
 
 安装Chart：
 
+
+---------------------------------------Need to remove---------------------------------------
 ```bash
 # 添加仓库
 helm repo add douban #todo not using douban anymore
