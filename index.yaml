@@ -1,0 +1,56 @@
+apiVersion: v1
+entries:
+  dify:
+  - apiVersion: v2
+    appVersion: 0.6.11
+    created: "2025-03-03T10:48:06.230164+08:00"
+    dependencies:
+    - condition: redis.embedded
+      name: redis
+      repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+      version: ~19.1.1
+    - condition: postgresql.embedded
+      name: postgresql
+      repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+      version: ~15.2.5
+    - condition: minio.embedded
+      name: minio
+      repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+      version: ~14.1.7
+    description: A Helm chart for Dify
+    digest: 400bed4b6796a640884da4df6ba385c6da9e090d64a0ed1a9eddfb9b0eda1dd4
+    home: https://github.com/langgenius/dify
+    maintainers:
+    - name: douban
+    name: dify
+    type: application
+    urls:
+    - dify-1.0.0.tgz
+    version: 1.0.0
+  - apiVersion: v2
+    appVersion: 0.6.11
+    created: "2025-03-03T10:48:06.218269+08:00"
+    dependencies:
+    - condition: redis.embedded
+      name: redis
+      repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+      version: ~19.1.1
+    - condition: postgresql.embedded
+      name: postgresql
+      repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+      version: ~15.2.5
+    - condition: minio.embedded
+      name: minio
+      repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+      version: ~14.1.7
+    description: A Helm chart for Dify
+    digest: 4ae42ec14ba6d827e37be7d50929da55da794eaa7d49886e00f68ad3e34db1e4
+    home: https://github.com/langgenius/dify
+    maintainers:
+    - name: douban
+    name: dify
+    type: application
+    urls:
+    - dify-0.5.1.tgz
+    version: 0.5.1
+generated: "2025-03-03T10:48:06.205647+08:00"
