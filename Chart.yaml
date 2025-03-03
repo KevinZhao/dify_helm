@@ -1,11 +1,25 @@
 apiVersion: v2
 name: dify
-description: A Helm chart for Dify
+description: Dify是一个LLM应用开发平台，通过使用此Helm chart可以在Kubernetes上轻松部署Dify应用。经过优化的chart大小确保了更快的部署速度。
 
 home: https://github.com/langgenius/dify
 
 maintainers:
   - name: douban
+  
+keywords:
+  - dify
+  - llm
+  - ai
+  
+annotations:
+  artifacthub.io/changes: |
+    - 优化chart大小，移除不必要空行
+    - 设置Redis和PostgreSQL为外部依赖
+    - 解决"Request entity too large"错误
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/license: Apache-2.0
 
 # A chart can be either an 'application' or a 'library' chart.
 #

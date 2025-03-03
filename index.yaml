@@ -1,56 +1,75 @@
 apiVersion: v1
 entries:
   dify:
-  - apiVersion: v2
+  - annotations:
+      artifacthub.io/changes: |
+        - 优化chart大小，移除不必要空行
+        - 设置Redis和PostgreSQL为外部依赖
+        - 解决"Request entity too large"错误
+      artifacthub.io/containsSecurityUpdates: "false"
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/prerelease: "false"
+    apiVersion: v2
     appVersion: 0.6.11
-    created: "2025-03-03T10:48:06.230164+08:00"
+    created: "2025-03-03T22:34:52.580249+08:00"
     dependencies:
-    - condition: redis.embedded
-      name: redis
-      repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
-      version: ~19.1.1
-    - condition: postgresql.embedded
-      name: postgresql
-      repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
-      version: ~15.2.5
     - condition: minio.embedded
       name: minio
       repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
       version: ~14.1.7
-    description: A Helm chart for Dify
-    digest: 400bed4b6796a640884da4df6ba385c6da9e090d64a0ed1a9eddfb9b0eda1dd4
+    description: Dify是一个LLM应用开发平台，通过使用此Helm chart可以在Kubernetes上轻松部署Dify应用。经过优化的chart大小确保了更快的部署速度。
+    digest: aea121bd5fd3f4d4d6993cd03d52606b822bb9674a6bac98442c2a084b720492
     home: https://github.com/langgenius/dify
+    keywords:
+    - dify
+    - llm
+    - ai
     maintainers:
     - name: douban
     name: dify
     type: application
     urls:
-    - dify-1.0.0.tgz
+    - https://kevinzhao.github.io/dify_helm/dify-1.0.0.tgz
     version: 1.0.0
-  - apiVersion: v2
-    appVersion: 0.6.11
-    created: "2025-03-03T10:48:06.218269+08:00"
+  minio:
+  - annotations:
+      category: Infrastructure
+      images: |
+        - name: minio
+          image: docker.io/bitnami/minio:2024.4.18-debian-12-r0
+        - name: minio-client
+          image: docker.io/bitnami/minio-client:2024.3.30-debian-12-r2
+        - name: os-shell
+          image: docker.io/bitnami/os-shell:12-debian-12-r18
+      licenses: Apache-2.0
+    apiVersion: v2
+    appVersion: 2024.4.18
+    created: "2025-03-03T22:34:52.581719+08:00"
     dependencies:
-    - condition: redis.embedded
-      name: redis
-      repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
-      version: ~19.1.1
-    - condition: postgresql.embedded
-      name: postgresql
-      repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
-      version: ~15.2.5
-    - condition: minio.embedded
-      name: minio
-      repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
-      version: ~14.1.7
-    description: A Helm chart for Dify
-    digest: 4ae42ec14ba6d827e37be7d50929da55da794eaa7d49886e00f68ad3e34db1e4
-    home: https://github.com/langgenius/dify
+    - name: common
+      repository: oci://registry-1.docker.io/bitnamicharts
+      tags:
+      - bitnami-common
+      version: 2.x.x
+    description: MinIO(R) is an object storage server, compatible with Amazon S3 cloud
+      storage service, mainly used for storing unstructured data (such as photos,
+      videos, log files, etc.).
+    digest: 4e2fe0e0e25646f9bde303de7628a5f33b94aadb0246207c91c8c22e38388ffc
+    home: https://bitnami.com
+    icon: https://bitnami.com/assets/stacks/minio/img/minio-stack-220x234.png
+    keywords:
+    - minio
+    - storage
+    - object-storage
+    - s3
+    - cluster
     maintainers:
-    - name: douban
-    name: dify
-    type: application
+    - name: VMware, Inc.
+      url: https://github.com/bitnami/charts
+    name: minio
+    sources:
+    - https://github.com/bitnami/charts/tree/main/bitnami/minio
     urls:
-    - dify-0.5.1.tgz
-    version: 0.5.1
-generated: "2025-03-03T10:48:06.205647+08:00"
+    - https://kevinzhao.github.io/dify_helm/charts/minio-14.1.8.tgz
+    version: 14.1.8
+generated: "2025-03-03T22:34:52.555434+08:00"
