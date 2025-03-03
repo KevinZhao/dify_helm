@@ -1,0 +1,18 @@
+{{- if .Values.plugin_daemon.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "dify.fullname" . }}-plugin-daemon-pvc
+  labels:
+    {{- include "dify.labels" . | nindent 4 }}
+    app.kubernetes.io/component: plugin_daemon
+spec:
+  accessModes:
+    - {{ .Values.plugin_daemon.persistence.accessMode }}
+  {{- if .Values.plugin_daemon.persistence.storageClass }}
+  storageClassName: {{ .Values.plugin_daemon.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.plugin_daemon.persistence.size }}
+{{- end }}
