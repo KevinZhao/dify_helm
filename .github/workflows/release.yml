@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+# 这里添加权限设置以允许GitHub Actions写入仓库
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
