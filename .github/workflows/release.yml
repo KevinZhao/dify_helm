@@ -33,6 +33,14 @@ jobs:
       - name: Update index.yaml
         run: |
           helm repo index --url https://kevinzhao.github.io/dify_helm .
+      
+      - name: Create deployment folder
+        run: |
+          mkdir -p deployment
+          cp index.yaml deployment/
+          # 如果有较小的文件也可以复制
+          mkdir -p deployment/charts
+          cp charts/*.tgz deployment/charts/ || true
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
@@ -40,6 +48,6 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: .
+          folder: deployment
           branch: gh-pages
-          clean: false
+          clean: true

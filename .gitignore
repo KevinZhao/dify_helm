@@ -43,3 +43,6 @@ dify-cdk/bin/dify-helm-stack_oregon.ts
 dify-cdk/cdk_singapore.json
 dify-cdk/cdk_original.json
 dify-cdk/bin/dify-helm-stack_original.ts
+
+# 添加大尺寸的Helm包，避免推送到GitHub
+*.tgz
