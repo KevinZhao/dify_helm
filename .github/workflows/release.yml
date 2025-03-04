@@ -38,7 +38,8 @@ jobs:
         run: |
           mkdir -p deployment
           cp index.yaml deployment/
-          # 如果有较小的文件也可以复制
+          cp dify-*.tgz deployment/
+          # 复制依赖的chart包
           mkdir -p deployment/charts
           cp charts/*.tgz deployment/charts/ || true
 
