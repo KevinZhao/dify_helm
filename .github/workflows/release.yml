@@ -1,0 +1,41 @@
+name: Release Charts
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
+      - name: Package Helm Chart
+        run: |
+          helm package .
+          
+      - name: Update index.yaml
+        run: |
+          helm repo index --url https://kevinzhao.github.io/dify_helm .
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: .
+          branch: gh-pages
+          clean: false

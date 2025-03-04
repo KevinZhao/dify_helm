@@ -11,14 +11,14 @@ entries:
       artifacthub.io/prerelease: "false"
     apiVersion: v2
     appVersion: 0.6.11
-    created: "2025-03-03T22:34:52.580249+08:00"
+    created: "2025-03-04T12:37:06.435941+08:00"
     dependencies:
     - condition: minio.embedded
       name: minio
       repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
       version: ~14.1.7
     description: Dify是一个LLM应用开发平台，通过使用此Helm chart可以在Kubernetes上轻松部署Dify应用。经过优化的chart大小确保了更快的部署速度。
-    digest: aea121bd5fd3f4d4d6993cd03d52606b822bb9674a6bac98442c2a084b720492
+    digest: a733f9a2820c54fd8e81724331ceaa6d4cc1bca3113009180f265351926a6b9f
     home: https://github.com/langgenius/dify
     keywords:
     - dify
@@ -44,7 +44,7 @@ entries:
       licenses: Apache-2.0
     apiVersion: v2
     appVersion: 2024.4.18
-    created: "2025-03-03T22:34:52.581719+08:00"
+    created: "2025-03-04T12:37:06.437695+08:00"
     dependencies:
     - name: common
       repository: oci://registry-1.docker.io/bitnamicharts
@@ -72,4 +72,4 @@ entries:
     urls:
     - https://kevinzhao.github.io/dify_helm/charts/minio-14.1.8.tgz
     version: 14.1.8
-generated: "2025-03-03T22:34:52.555434+08:00"
+generated: "2025-03-04T12:37:06.383977+08:00"
