@@ -27,6 +27,8 @@ jobs:
 
       - name: Install Helm
         uses: azure/setup-helm@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
         
       # Update Helm dependencies (but only download those marked as embedded)
       - name: Update Helm dependencies
