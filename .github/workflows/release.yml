@@ -25,6 +25,10 @@ jobs:
 
       - name: Install Helm
         uses: azure/setup-helm@v3
+        
+      # Add step to update dependencies before packaging
+      - name: Update Helm dependencies
+        run: helm dependency update .
 
       - name: Package Helm Chart
         run: |

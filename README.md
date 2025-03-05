@@ -196,6 +196,30 @@ dependencies:
 
 After changing dependency configuration, run `helm dependency update` to fetch the required charts.
 
+## Chart Dependencies Management
+
+This chart uses Helm's dependency management to handle Redis, PostgreSQL, and MinIO services. The Chart.yaml file defines these dependencies with specific version requirements. There are two ways to work with these dependencies:
+
+### For Users
+
+When installing from the repository, dependencies are automatically managed through the CI/CD process. You don't need to take any additional actions.
+
+### For Developers
+
+If you're working with this chart locally:
+
+```bash
+# Update dependencies (downloads dependency charts to charts/ directory)
+helm dependency update
+
+# List all dependencies and their status
+helm dependency list
+```
+
+If you modify any dependency version in Chart.yaml, make sure to run `helm dependency update` to refresh the charts.
+
+Note: The `charts/` directory is not committed to the repository; dependencies are dynamically downloaded during the CI build process.
+
 ## Production Deployment Checklist
 
 The minimal configuration above is suitable for experimentation but **has no persistence**. If PostgreSQL or MinIO Pods restart, all data will be lost!
