@@ -63,9 +63,10 @@ jobs:
           echo "剩余的嵌入依赖包："
           ls -la charts/ || echo "没有嵌入的依赖包"
 
+      # 现在依赖已被标记为可选，不再需要--dependency-update=false参数
       - name: Package Helm Chart
         run: |
-          helm package . --dependency-update=false
+          helm package .
           
       - name: Update index.yaml
         run: |
