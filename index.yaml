@@ -12,24 +12,11 @@ entries:
       artifacthub.io/prerelease: "false"
     apiVersion: v2
     appVersion: 1.0.0
-    created: "2025-03-05T08:56:57.3560575Z"
-    dependencies:
-    - condition: redis.embedded
-      name: redis
-      repository: https://charts.bitnami.com/bitnami
-      version: ~17.11.0
-    - condition: postgresql.embedded
-      name: postgresql
-      repository: https://charts.bitnami.com/bitnami
-      version: ~12.5.0
-    - condition: minio.embedded
-      name: minio
-      repository: https://charts.bitnami.com/bitnami
-      version: ~12.6.0
+    created: "2025-03-05T09:44:58.15178149Z"
     description: Dify is an LLM application development platform. This Helm chart
       enables easy deployment of Dify on Kubernetes. The optimized chart size ensures
       faster deployment.
-    digest: 0500b129de9b7cdd2210258d4cf0936ead2268616a5f9cf276ede7f53eb1e717
+    digest: c6707c091ec1788e3f1fad161cc099c77fd030377f400b3d571519950fa7a928
     home: https://github.com/langgenius/dify
     keywords:
     - dify
@@ -42,105 +29,4 @@ entries:
     urls:
     - https://kevinzhao.github.io/dify_helm/dify-1.0.0.tgz
     version: 1.0.0
-  minio:
-  - annotations:
-      category: Infrastructure
-      licenses: Apache-2.0
-    apiVersion: v2
-    appVersion: 2023.7.18
-    created: "2025-03-05T08:56:57.359712425Z"
-    dependencies:
-    - name: common
-      repository: oci://registry-1.docker.io/bitnamicharts
-      tags:
-      - bitnami-common
-      version: 2.x.x
-    description: MinIO(R) is an object storage server, compatible with Amazon S3 cloud
-      storage service, mainly used for storing unstructured data (such as photos,
-      videos, log files, etc.).
-    digest: 0b26651afff43034c2daa99c46bcdf2c90d2d1b801117fb1078002d5ee48c3ea
-    home: https://bitnami.com
-    icon: https://bitnami.com/assets/stacks/minio/img/minio-stack-220x234.png
-    keywords:
-    - minio
-    - storage
-    - object-storage
-    - s3
-    - cluster
-    maintainers:
-    - name: VMware, Inc.
-      url: https://github.com/bitnami/charts
-    name: minio
-    sources:
-    - https://github.com/bitnami/charts/tree/main/bitnami/minio
-    urls:
-    - https://kevinzhao.github.io/dify_helm/charts/minio-12.6.12.tgz
-    version: 12.6.12
-  postgresql:
-  - annotations:
-      category: Database
-      licenses: Apache-2.0
-    apiVersion: v2
-    appVersion: 15.3.0
-    created: "2025-03-05T08:56:57.363020201Z"
-    dependencies:
-    - name: common
-      repository: oci://registry-1.docker.io/bitnamicharts
-      tags:
-      - bitnami-common
-      version: 2.x.x
-    description: PostgreSQL (Postgres) is an open source object-relational database
-      known for reliability and data integrity. ACID-compliant, it supports foreign
-      keys, joins, views, triggers and stored procedures.
-    digest: b71d8a2094266edbd233fd5206c1aa6fcf03b1dee0aad3e80923326ed49f5dea
-    home: https://bitnami.com
-    icon: https://bitnami.com/assets/stacks/postgresql/img/postgresql-stack-220x234.png
-    keywords:
-    - postgresql
-    - postgres
-    - database
-    - sql
-    - replication
-    - cluster
-    maintainers:
-    - name: VMware, Inc.
-      url: https://github.com/bitnami/charts
-    name: postgresql
-    sources:
-    - https://github.com/bitnami/charts/tree/main/bitnami/postgresql
-    urls:
-    - https://kevinzhao.github.io/dify_helm/charts/postgresql-12.5.9.tgz
-    version: 12.5.9
-  redis:
-  - annotations:
-      category: Database
-      licenses: Apache-2.0
-    apiVersion: v2
-    appVersion: 7.0.12
-    created: "2025-03-05T08:56:57.367614741Z"
-    dependencies:
-    - name: common
-      repository: oci://registry-1.docker.io/bitnamicharts
-      tags:
-      - bitnami-common
-      version: 2.x.x
-    description: Redis(R) is an open source, advanced key-value store. It is often
-      referred to as a data structure server since keys can contain strings, hashes,
-      lists, sets and sorted sets.
-    digest: d7eb17cc8c8c57e794a615966c7742686f78c6fba579d0e740bb83edfecd7331
-    home: https://bitnami.com
-    icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
-    keywords:
-    - redis
-    - keyvalue
-    - database
-    maintainers:
-    - name: VMware, Inc.
-      url: https://github.com/bitnami/charts
-    name: redis
-    sources:
-    - https://github.com/bitnami/charts/tree/main/bitnami/redis
-    urls:
-    - https://kevinzhao.github.io/dify_helm/charts/redis-17.11.8.tgz
-    version: 17.11.8
-generated: "2025-03-05T08:56:57.343595665Z"
+generated: "2025-03-05T09:44:58.150208869Z"
