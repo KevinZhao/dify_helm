@@ -5,9 +5,11 @@ on:
     branches:
       - main
 
-# 这里添加权限设置以允许GitHub Actions写入仓库
+# 这里添加权限设置以允许GitHub Actions写入仓库和部署Pages
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   release:
@@ -103,3 +105,4 @@ jobs:
           folder: deployment
           branch: gh-pages
           clean: true
+          token: ${{ secrets.GITHUB_TOKEN }}
