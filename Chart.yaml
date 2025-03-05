@@ -44,19 +44,20 @@ version: 1.0.0
 appVersion: "1.0.0"
 
 # Dependencies definition following the official Helm dependency mechanism
-dependencies:
-  - name: redis
-    version: "~17.11.0"
-    repository: "https://charts.bitnami.com/bitnami"
-    condition: redis.embedded
-    optional: true
-  - name: postgresql
-    version: "~12.5.0"
-    repository: "https://charts.bitnami.com/bitnami"
-    condition: postgresql.embedded
-    optional: true
-  - name: minio
-    version: "~12.6.0"
-    repository: "https://charts.bitnami.com/bitnami"
-    condition: minio.embedded
-    optional: true
+# 由于所有依赖都设置为外部依赖（embedded: false），完全移除依赖声明
+# dependencies:
+#   - name: redis
+#     version: "~17.11.0"
+#     repository: "https://charts.bitnami.com/bitnami"
+#     condition: redis.embedded
+#     optional: true
+#   - name: postgresql
+#     version: "~12.5.0"
+#     repository: "https://charts.bitnami.com/bitnami"
+#     condition: postgresql.embedded
+#     optional: true
+#   - name: minio
+#     version: "~12.6.0"
+#     repository: "https://charts.bitnami.com/bitnami"
+#     condition: minio.embedded
+#     optional: true
