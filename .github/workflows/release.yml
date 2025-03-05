@@ -65,7 +65,7 @@ jobs:
 
       - name: Package Helm Chart
         run: |
-          helm package .
+          helm package . --dependency-update=false
           
       - name: Update index.yaml
         run: |
