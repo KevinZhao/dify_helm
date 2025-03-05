@@ -28,10 +28,10 @@ global:
   # * worker
   extraBackendEnvs:
   # SECRET_KEY is a must, check https://docs.dify.ai/getting-started/install-self-hosted/environments#secret_key for detail
-  # read more on the readme page for secret ref
+  # Generate your own secure secret key, e.g. with: openssl rand -base64 42
   - name: SECRET_KEY
-    value: "PleaseReplaceThisToYourSecretOrUse"
-  # use secretRef to protect your secret
+    value: ""  # IMPORTANT: You must set your own secure value here
+  # use secretRef to protect your secret (recommended for production)
   # - name: SECRET_KEY
   #   valueFrom:
   #     secretKeyRef:
@@ -41,11 +41,11 @@ global:
   - name: PLUGIN_DAEMON_URL
     value: "http://{{ include \"dify.fullname\" . }}-plugin-daemon:5002"
   - name: PLUGIN_DAEMON_KEY
-    value: "lYkiYYT6owG+71oLerGzA7GXCgOT++6ovaezWAjpCjf+Sjc3ZtU+qUEi"
+    value: ""  # IMPORTANT: Generate a secure random string for production use
   - name: PLUGIN_MAX_PACKAGE_SIZE
     value: "52428800"
   - name: PLUGIN_DIFY_INNER_API_KEY
-    value: "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+    value: ""  # IMPORTANT: Generate a secure random string for production use
 
   # Provide extra labels for all deployments and related pods of this chart
   labels: {}
@@ -268,7 +268,7 @@ plugin_daemon:
   - name: SERVER_PORT
     value: "5002"
   - name: SERVER_KEY
-    value: "lYkiYYT6owG+71oLerGzA7GXCgOT++6ovaezWAjpCjf+Sjc3ZtU+qUEi"
+    value: ""  # IMPORTANT: Use the same value as PLUGIN_DAEMON_KEY above
   - name: MAX_PLUGIN_PACKAGE_SIZE
     value: "52428800"
   - name: PPROF_ENABLED
@@ -276,7 +276,7 @@ plugin_daemon:
   - name: DIFY_INNER_API_URL
     value: "http://{{ include \"dify.fullname\" . }}-api-svc:80"
   - name: DIFY_INNER_API_KEY
-    value: "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+    value: ""  # IMPORTANT: Use the same value as PLUGIN_DIFY_INNER_API_KEY above
   - name: PLUGIN_REMOTE_INSTALLING_HOST
     value: "0.0.0.0"
   - name: PLUGIN_REMOTE_INSTALLING_PORT
@@ -348,8 +348,8 @@ plugin_daemon:
 
 sandbox:
   replicaCount: 1
-  # please change to avoid abuse
-  apiKey: "dify-sandbox"
+  # IMPORTANT: Change this to a secure value to prevent abuse
+  apiKey: ""
   # prefer to use secret
   apiKeySecret: ""
   image:

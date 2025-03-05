@@ -1,6 +1,6 @@
 apiVersion: v2
 name: dify
-description: Dify是一个LLM应用开发平台，通过使用此Helm chart可以在Kubernetes上轻松部署Dify应用。经过优化的chart大小确保了更快的部署速度。
+description: Dify is an LLM application development platform. This Helm chart enables easy deployment of Dify on Kubernetes. The optimized chart size ensures faster deployment.
 
 home: https://github.com/langgenius/dify
 
@@ -14,9 +14,10 @@ keywords:
   
 annotations:
   artifacthub.io/changes: |
-    - 优化chart大小，移除不必要空行
-    - 设置Redis和PostgreSQL为外部依赖
-    - 解决"Request entity too large"错误
+    - Optimized chart size by removing unnecessary blank lines
+    - Set Redis and PostgreSQL as external dependencies
+    - Fixed "Request entity too large" error
+    - Removed embedded dependencies to reduce chart size
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/prerelease: "false"
   artifacthub.io/license: Apache-2.0
@@ -40,10 +41,19 @@ version: 1.0.0
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "0.6.11"
+appVersion: "1.0.0"
 
+# Dependencies definition following the official Helm dependency mechanism
 dependencies:
+  - name: redis
+    version: "~17.11.0"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.embedded
+  - name: postgresql
+    version: "~12.5.0"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.embedded
   - name: minio
-    version: ~14.1.7
-    repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+    version: "~12.6.0"
+    repository: "https://charts.bitnami.com/bitnami"
     condition: minio.embedded

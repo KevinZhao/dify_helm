@@ -1,48 +1,48 @@
 # Dify Helm Chart
 
-这个Helm Chart用于在Kubernetes集群上部署[Dify](https://github.com/langgenius/dify) - 一个开源的LLM应用开发平台。
+This Helm Chart is designed for deploying [Dify](https://github.com/langgenius/dify), an open-source LLM application development platform, on Kubernetes clusters.
 
-本Helm Chart基于Dify官方提供的docker-compose配置开发，遵循Apache License 2.0许可证分发。
+This Helm Chart was developed based on Dify's official docker-compose configuration and is distributed under the Apache License 2.0.
 
-## 目录
+## Table of Contents
 
-- [快速开始](#快速开始)
-- [安装](#安装)
-- [升级](#升级)
-- [配置](#配置)
-  - [全局配置](#全局配置)
-  - [组件配置](#组件配置)
-  - [依赖服务](#依赖服务)
-- [生产环境部署清单](#生产环境部署清单)
-  - [敏感信息保护](#敏感信息保护)
-  - [外部PostgreSQL](#外部postgresql)
-  - [外部Redis](#外部redis)
-  - [外部对象存储](#外部对象存储)
-  - [向量数据库配置](#向量数据库配置)
-- [资源优化建议](#资源优化建议)
-- [高可用性配置](#高可用性配置)
-- [监控与日志](#监控与日志)
-- [故障排除](#故障排除)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Upgrading](#upgrading)
+- [Configuration](#configuration)
+  - [Global Configuration](#global-configuration)
+  - [Component Configuration](#component-configuration)
+  - [Dependent Services](#dependent-services)
+- [Production Deployment Checklist](#production-deployment-checklist)
+  - [Sensitive Information Protection](#sensitive-information-protection)
+  - [External PostgreSQL](#external-postgresql)
+  - [External Redis](#external-redis)
+  - [External Object Storage](#external-object-storage)
+  - [Vector Database Configuration](#vector-database-configuration)
+- [Resource Optimization](#resource-optimization)
+- [High Availability Configuration](#high-availability-configuration)
+- [Monitoring and Logging](#monitoring-and-logging)
+- [Troubleshooting](#troubleshooting)
 
-## 快速开始
+## Quick Start
 
-创建自定义values文件，保存为`my-values.yaml`：
+Create a custom values file, save it as `my-values.yaml`:
 
 ```yaml
 global:
   host: "mydify.example.com"
   enableTLS: false
   image:
-    tag: "1.0.0"  # 检查最新版本: https://github.com/langgenius/dify/releases
+    tag: "1.0.0"  # Check latest version: https://github.com/langgenius/dify/releases
   extraBackendEnvs:
   - name: SECRET_KEY
-    value: "请替换为您自己的密钥"
+    value: "please-replace-with-your-own-secret"
 
 ingress:
   enabled: true
   className: "nginx"
 
-# 开发环境可使用内置服务，生产环境建议使用外部服务
+# Embedded services for development. For production, use external services
 redis:
   embedded: true
 postgresql:
@@ -51,81 +51,77 @@ minio:
   embedded: true
 ```
 
-安装Chart：
+Install the Chart:
 
-
----------------------------------------Need to remove---------------------------------------
 ```bash
-# 添加仓库
-helm repo add douban #todo not using douban anymore
+# Add repository
+helm repo add dify-repo <repository-url>
 helm repo update
 
-# 安装
-helm upgrade --install dify douban/dify -f my-values.yaml --namespace dify --create-namespace
+# Install
+helm upgrade --install dify dify-repo/dify -f my-values.yaml --namespace dify --create-namespace
 ```
 
-**重要**: 安装后必须运行数据库迁移，否则实例将无法正常工作：
+**Important**: After installation, you must run database migrations or the instance will not work properly:
 
 ```bash
-# 获取API Pod名称
+# Get API Pod name
 kubectl get pods -n dify -l app.kubernetes.io/component=api
 
-# 运行迁移
+# Run migration
 kubectl exec -it <dify-api-pod-name> -n dify -- flask db upgrade
 ```
 
+## Installation
 
-
-## 安装
-
-### 前提条件
+### Prerequisites
 
 - Kubernetes 1.19+
 - Helm 3.2.0+
-- PV provisioner支持（如果启用持久化存储）
-- Ingress控制器（如果启用Ingress）
+- PV provisioner support (if persistence is enabled)
+- Ingress controller (if Ingress is enabled)
 
-### 详细安装步骤
+### Detailed Installation Steps
 
-1. 添加Helm仓库：
+1. Add the Helm repository:
 
 ```bash
-helm repo add douban https://douban.github.io/charts/
+helm repo add dify-repo <repository-url>
 helm repo update
 ```
 
-2. 创建命名空间（可选）：
+2. Create namespace (optional):
 
 ```bash
 kubectl create namespace dify
 ```
 
-3. 安装Chart：
+3. Install the Chart:
 
 ```bash
-helm upgrade --install dify douban/dify -f my-values.yaml --namespace dify
+helm upgrade --install dify dify-repo/dify -f my-values.yaml --namespace dify
 ```
 
-4. 运行数据库迁移：
+4. Run database migrations:
 
 ```bash
 kubectl exec -it $(kubectl get pods -n dify -l app.kubernetes.io/component=api -o jsonpath='{.items[0].metadata.name}') -n dify -- flask db upgrade
 ```
 
-5. 访问Dify：
+5. Access Dify:
 
-如果启用了Ingress，可以通过配置的主机名访问Dify。
-如果未启用Ingress，可以使用端口转发访问：
+If Ingress is enabled, access Dify through the configured hostname.
+If Ingress is not enabled, use port-forwarding:
 
 ```bash
 kubectl port-forward svc/dify-frontend 3000:80 -n dify
 ```
 
-然后在浏览器中访问 http://localhost:3000
+Then visit http://localhost:3000 in your browser.
 
-## 升级
+## Upgrading
 
-要升级应用，修改`global.image.tag`为所需版本：
+To upgrade the application, modify `global.image.tag` to the desired version:
 
 ```yaml
 global:
@@ -133,75 +129,102 @@ global:
     tag: "1.0.0"
 ```
 
-然后使用Helm命令升级：
+Then upgrade using the Helm command:
 
 ```bash
-helm upgrade dify douban/dify -f my-values.yaml --namespace dify
+helm upgrade dify dify-repo/dify -f my-values.yaml --namespace dify
 ```
 
-**重要**: 升级后必须运行数据库迁移：
+**Important**: After upgrading, you must run database migrations:
 
 ```bash
 kubectl exec -it $(kubectl get pods -n dify -l app.kubernetes.io/component=api -o jsonpath='{.items[0].metadata.name}') -n dify -- flask db upgrade
 ```
 
-## 配置
+## Configuration
 
-### 全局配置
+### Global Configuration
 
-| 参数 | 描述 | 默认值 |
+| Parameter | Description | Default |
 |------|------|--------|
-| `global.host` | 应用主机名 | `"chart-example.local"` |
-| `global.port` | 非标准端口（非80/443）时设置 | `""` |
-| `global.enableTLS` | 是否启用TLS | `false` |
-| `global.image.tag` | 全局镜像标签 | Chart的appVersion |
-| `global.edition` | Dify版本 | `"SELF_HOSTED"` |
-| `global.storageType` | 存储类型 | `"s3"` |
-| `global.extraEnvs` | 注入到所有组件的环境变量 | `[]` |
-| `global.extraBackendEnvs` | 注入到后端组件的环境变量 | 见values.yaml |
-| `global.labels` | 添加到所有部署的标签 | `{}` |
+| `global.host` | Application hostname | `"chart-example.local"` |
+| `global.port` | Set for non-standard ports (not 80/443) | `""` |
+| `global.enableTLS` | Enable TLS | `false` |
+| `global.image.tag` | Global image tag | Chart's appVersion |
+| `global.edition` | Dify version | `"SELF_HOSTED"` |
+| `global.storageType` | Storage type | `"s3"` |
+| `global.extraEnvs` | Environment variables for all components | `[]` |
+| `global.extraBackendEnvs` | Environment variables for backend components | See values.yaml |
+| `global.labels` | Labels added to all deployments | `{}` |
 
-### 组件配置
+### Component Configuration
 
-Dify包含以下主要组件，每个组件都可以单独配置：
+Dify includes these main components, each configurable individually:
 
-- `frontend`: Web前端
-- `api`: API服务
-- `worker`: 后台工作进程
-- `plugin_daemon`: 插件守护进程
-- `sandbox`: 代码沙箱环境
+- `frontend`: Web frontend
+- `api`: API service
+- `worker`: Background worker process
+- `plugin_daemon`: Plugin daemon
+- `sandbox`: Code sandbox environment
 
-每个组件都支持以下常见配置：
+Each component supports these common configurations:
 
-- `replicaCount`: 副本数量
-- `image`: 镜像配置
-- `resources`: 资源请求和限制
-- `nodeSelector`: 节点选择器
-- `tolerations`: 容忍配置
-- `affinity`: 亲和性配置
-- `autoscaling`: 自动扩缩容配置
+- `replicaCount`: Number of replicas
+- `image`: Image configuration
+- `resources`: Resource requests and limits
+- `nodeSelector`: Node selector
+- `tolerations`: Tolerations
+- `affinity`: Affinity settings
+- `autoscaling`: Autoscaling configuration
 
-### 依赖服务
+### Dependent Services
 
-Chart包含以下可选的依赖服务：
+The chart includes these optional dependent services:
 
-- `redis`: 缓存和消息队列
-- `postgresql`: 主数据库
-- `minio`: 对象存储
+- `redis`: Cache and message queue
+- `postgresql`: Main database
+- `minio`: Object storage
 
-每个依赖都可以选择使用内嵌服务或外部服务。
+Each dependency can use either embedded or external services. When `embedded` is set to `true`, the chart will use the official Helm dependencies from Bitnami charts:
 
-## 生产环境部署清单
+```yaml
+dependencies:
+  - redis: ~17.11.0 (from https://charts.bitnami.com/bitnami)
+  - postgresql: ~12.5.0 (from https://charts.bitnami.com/bitnami)
+  - minio: ~12.6.0 (from https://charts.bitnami.com/bitnami)
+```
 
-上面提供的最小配置适用于实验环境，但**没有任何持久化**。如果重启PostgreSQL或MinIO Pod，所有数据都将丢失！
+After changing dependency configuration, run `helm dependency update` to fetch the required charts.
 
-在投入生产环境前，**必须**完成以下额外工作：
+## Production Deployment Checklist
 
-### 敏感信息保护
+The minimal configuration above is suitable for experimentation but **has no persistence**. If PostgreSQL or MinIO Pods restart, all data will be lost!
 
-环境变量如`SECRET_KEY`如果泄露可能造成危害，建议使用Secret或CSI卷进行保护。
+Before deploying to production, you **must** complete these additional steps:
 
-使用Secret的示例：
+### Sensitive Information Protection
+
+Several security-sensitive environment variables are required for Dify to function properly. The default values.yaml has these values set to empty - you must provide your own secure values:
+
+```yaml
+# Required security keys - MUST be configured with secure values:
+- name: SECRET_KEY             # Main application secret key
+- name: PLUGIN_DAEMON_KEY      # Plugin daemon authentication key
+- name: PLUGIN_DIFY_INNER_API_KEY  # Internal API authentication key
+```
+
+You can generate secure random strings using commands like:
+```bash
+# For SECRET_KEY
+openssl rand -base64 42
+
+# For other authentication keys
+openssl rand -base64 32
+```
+
+Environment variables like these can be harmful if leaked. For production use, use Secrets or CSI volumes for protection.
+
+Example using Secrets:
 
 ```yaml
 global:
@@ -213,7 +236,7 @@ global:
         key: SECRET_KEY
 ```
 
-创建Secret：
+Create the Secret:
 
 ```bash
 kubectl create secret generic dify \
@@ -221,19 +244,19 @@ kubectl create secret generic dify \
   --namespace dify
 ```
 
-更多信息：[Kubernetes Secrets最佳实践](https://kubernetes.io/docs/concepts/security/secrets-good-practices/)
+For more information: [Kubernetes Secrets Best Practices](https://kubernetes.io/docs/concepts/security/secrets-good-practices/)
 
-### 外部PostgreSQL
+### External PostgreSQL
 
-1. 将`postgresql.embedded`设置为`false`
-2. 通过`global.extraBackendEnvs`注入连接信息：
+1. Set `postgresql.embedded` to `false`
+2. Inject connection information via `global.extraBackendEnvs`:
 
 ```yaml
 global:
   extraBackendEnvs:
   - name: DB_USERNAME
     value: "postgres"
-  # 建议使用Secret管理敏感信息，包括密码
+  # Using Secret for sensitive information is recommended
   - name: DB_PASSWORD
     valueFrom:
       secretKeyRef:
@@ -247,10 +270,10 @@ global:
     value: "dify"
 ```
 
-### 外部Redis
+### External Redis
 
-1. 将`redis.embedded`设置为`false`
-2. 通过`global.extraBackendEnvs`注入连接信息：
+1. Set `redis.embedded` to `false`
+2. Inject connection information via `global.extraBackendEnvs`:
 
 ```yaml
 global:
@@ -261,7 +284,7 @@ global:
     value: "6379"
   - name: REDIS_DB
     value: "0"
-  # 建议使用Secret管理敏感信息
+  # Using Secret for sensitive information is recommended
   - name: REDIS_PASSWORD
     valueFrom:
       secretKeyRef:
@@ -274,12 +297,12 @@ global:
         key: CELERY_BROKER_URL
 ```
 
-### 外部对象存储
+### External Object Storage
 
 #### Amazon S3
 
-1. 将`minio.embedded`设置为`false`
-2. 通过`global.extraBackendEnvs`注入连接信息：
+1. Set `minio.embedded` to `false`
+2. Inject connection information via `global.extraBackendEnvs`:
 
 ```yaml
 global:
@@ -291,7 +314,7 @@ global:
     value: "dify-storage"
   - name: S3_REGION
     value: "us-east-1"
-  # 建议使用Secret管理敏感信息
+  # Using Secret for sensitive information is recommended
   - name: S3_ACCESS_KEY
     valueFrom:
       secretKeyRef:
@@ -306,8 +329,8 @@ global:
 
 #### Google Cloud Storage
 
-1. 将`minio.embedded`设置为`false`
-2. 通过`global.extraBackendEnvs`注入连接信息：
+1. Set `minio.embedded` to `false`
+2. Inject connection information via `global.extraBackendEnvs`:
 
 ```yaml
 global:
@@ -322,9 +345,9 @@ global:
         key: GOOGLE_STORAGE_SERVICE_ACCOUNT_JSON_BASE64
 ```
 
-### 向量数据库配置
+### Vector Database Configuration
 
-由于向量数据库的复杂性，此组件未包含在Chart中，您需要使用外部向量数据库。同样，您可以注入环境变量来使用它：
+Due to the complexity of vector databases, this component is not included in the Chart. You need to use an external vector database and inject environment variables:
 
 ```yaml
 global:
@@ -339,13 +362,13 @@ global:
     value: "dify"
 ```
 
-这不是向量数据库的完整配置，请参考[Dify文档](https://docs.dify.ai/v/zh-hans/getting-started/install-self-hosted/environments)获取更多信息。
+This is not a complete vector database configuration. Please refer to [Dify documentation](https://docs.dify.ai/getting-started/install-self-hosted/environments) for more information.
 
-## 资源优化建议
+## Resource Optimization
 
-为确保Dify在Kubernetes中稳定运行，建议为各组件配置适当的资源请求和限制：
+To ensure Dify runs stably in Kubernetes, we recommend configuring appropriate resource requests and limits:
 
-### API服务
+### API Service
 
 ```yaml
 api:
@@ -396,7 +419,7 @@ plugin_daemon:
       cpu: 500m
       memory: 1Gi
   persistence:
-    size: 10Gi  # 根据插件数量和大小调整
+    size: 10Gi  # Adjust based on plugin quantity and size
 ```
 
 ### Sandbox
@@ -412,11 +435,11 @@ sandbox:
       memory: 1Gi
 ```
 
-## 高可用性配置
+## High Availability Configuration
 
-为了提高系统的可用性和弹性，建议进行以下配置：
+To improve system availability and resilience, we recommend these configurations:
 
-### 增加副本数
+### Increase Replicas
 
 ```yaml
 api:
@@ -427,7 +450,7 @@ frontend:
   replicaCount: 2
 ```
 
-### 启用自动扩缩容
+### Enable Autoscaling
 
 ```yaml
 api:
@@ -439,7 +462,7 @@ api:
     targetMemoryUtilizationPercentage: 80
 ```
 
-### 配置Pod反亲和性
+### Configure Pod Anti-Affinity
 
 ```yaml
 api:
@@ -457,11 +480,11 @@ api:
           topologyKey: "kubernetes.io/hostname"
 ```
 
-## 监控与日志
+## Monitoring and Logging
 
-### Prometheus监控
+### Prometheus Monitoring
 
-添加Prometheus注解以启用监控：
+Add Prometheus annotations to enable monitoring:
 
 ```yaml
 api:
@@ -471,9 +494,9 @@ api:
     prometheus.io/port: "5001"
 ```
 
-### 日志收集
+### Log Collection
 
-配置日志收集，例如使用Fluentd：
+Configure log collection, for example using Fluentd:
 
 ```yaml
 global:
@@ -486,29 +509,29 @@ api:
     fluentd.io/collect: "true"
 ```
 
-## 故障排除
+## Troubleshooting
 
-### 常见问题
+### Common Issues
 
-1. **数据库迁移失败**
-   - 检查PostgreSQL连接配置
-   - 确保数据库用户有足够权限
+1. **Database Migration Failure**
+   - Check PostgreSQL connection configuration
+   - Ensure database user has sufficient permissions
 
-2. **无法连接到Redis**
-   - 验证Redis连接信息
-   - 检查Redis密码是否正确
+2. **Cannot Connect to Redis**
+   - Verify Redis connection information
+   - Check Redis password correctness
 
-3. **文件上传失败**
-   - 检查对象存储配置
-   - 验证存储桶权限
+3. **File Upload Failure**
+   - Check object storage configuration
+   - Verify bucket permissions
 
-4. **插件加载失败**
-   - 检查plugin_daemon的存储配置
-   - 验证插件权限设置
+4. **Plugin Loading Failure**
+   - Check plugin_daemon storage configuration
+   - Verify plugin permission settings
 
-### 获取帮助
+### Getting Help
 
-如果您在部署过程中遇到困难，请参考：
-- [Dify官方文档](https://docs.dify.ai/)
-- [Dify GitHub仓库](https://github.com/langgenius/dify)
-- [提交Issue](https://github.com/langgenius/dify/issues)
+If you encounter difficulties during deployment, refer to:
+- [Dify Official Documentation](https://docs.dify.ai/)
+- [Dify GitHub Repository](https://github.com/langgenius/dify)
+- [Submit an Issue](https://github.com/langgenius/dify/issues)

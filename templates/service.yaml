@@ -2,8 +2,8 @@
 apiVersion: v1
 kind: Service
 metadata:
-  # dify-api would confict with dify-api program
-  # use another name
+  # dify-api would conflict with dify-api program
+  # using alternative name for the service
   name: {{ include "dify.fullname" . }}-api-svc
   labels:
     {{- include "dify.labels" . | nindent 4 }}

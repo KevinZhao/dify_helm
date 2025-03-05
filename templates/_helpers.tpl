@@ -23,6 +23,22 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 {{- end }}
 
+{{/* 
+Installation Notes
+*/}}
+{{- define "dify.NOTES" -}}
+1. Get the application URL by running these commands:
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else }}
+  ingress not enabled, service would be available only inside cluster
+{{- end }}
+{{- end }}
+
 {{/*
 Create chart name and version as used by the chart label.
 */}}
