@@ -261,7 +261,7 @@ plugin_daemon:
     repository: langgenius/dify-plugin-daemon
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "0.0.3"
+    tag: "main-local"
   envs:
   - name: DB_DATABASE
     value: "dify_plugin"
