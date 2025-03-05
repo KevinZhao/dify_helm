@@ -31,39 +31,20 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
         
       # Update Helm dependencies (but only download those marked as embedded)
-      - name: Update Helm dependencies
+      # 由于已移除依赖声明，不再需要更新依赖
+      - name: Clean Environment
         run: |
-          # 先更新所有依赖
-          helm dependency update .
+          # 删除Chart.lock文件
+          echo "删除Chart.lock文件..."
+          rm -f Chart.lock || true
           
-          # 读取values.yaml中的embedded设置，删除未嵌入的依赖
-          echo "检查和清理外部依赖..."
+          # 确保charts目录存在但为空
+          echo "确保charts目录干净..."
+          mkdir -p charts
+          rm -rf charts/* || true
           
-          # 检查redis是否为外部依赖
-          REDIS_EMBEDDED=$(grep -A1 "redis:" values.yaml | grep "embedded" | awk '{print $2}')
-          if [ "$REDIS_EMBEDDED" = "false" ]; then
-            echo "Redis设置为外部依赖，移除下载的chart包"
-            rm -f charts/redis-*.tgz || true
-          fi
-          
-          # 检查postgresql是否为外部依赖
-          PG_EMBEDDED=$(grep -A1 "postgresql:" values.yaml | grep "embedded" | awk '{print $2}')
-          if [ "$PG_EMBEDDED" = "false" ]; then
-            echo "PostgreSQL设置为外部依赖，移除下载的chart包"
-            rm -f charts/postgresql-*.tgz || true
-          fi
-          
-          # 检查minio是否为外部依赖
-          MINIO_EMBEDDED=$(grep -A1 "minio:" values.yaml | grep "embedded" | awk '{print $2}')
-          if [ "$MINIO_EMBEDDED" = "false" ]; then
-            echo "MinIO设置为外部依赖，移除下载的chart包"
-            rm -f charts/minio-*.tgz || true
-          fi
-          
-          echo "剩余的嵌入依赖包："
-          ls -la charts/ || echo "没有嵌入的依赖包"
+          echo "环境已准备好打包..."
 
-      # 现在依赖已被标记为可选，不再需要--dependency-update=false参数
       - name: Package Helm Chart
         run: |
           helm package .
